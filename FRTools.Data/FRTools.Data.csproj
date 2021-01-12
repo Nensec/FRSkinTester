@@ -78,6 +78,7 @@
     <Compile Include="DataModels\FlightRisingModels\FRDominance.cs" />
     <Compile Include="DataModels\FlightRisingModels\FRUser.cs" />
     <Compile Include="DataModels\Job.cs" />
+    <Compile Include="DataModels\LogItem.cs" />
     <Compile Include="DataModels\PinglistModels\Pinglist.cs" />
     <Compile Include="DataModels\PinglistModels\PinglistCategory.cs" />
     <Compile Include="DataModels\PinglistModels\PingListEntry.cs" />
@@ -212,6 +213,10 @@
     <Compile Include="Migrations\202011161733082_Share URL.designer.cs">
       <DependentUpon>202011161733082_Share URL.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202101102246528_Logging.cs" />
+    <Compile Include="Migrations\202101102246528_Logging.designer.cs">
+      <DependentUpon>202101102246528_Logging.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -308,6 +313,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202011161733082_Share URL.resx">
       <DependentUpon>202011161733082_Share URL.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202101102246528_Logging.resx">
+      <DependentUpon>202101102246528_Logging.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

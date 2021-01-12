@@ -108,6 +108,20 @@
                                         @Html.RouteLink($"Logins", "ManageLogins", null, new { title = "Manage logins to your account" })
                                     </li>
                                     <li role="separator" class="divider"></li>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <li class="text-warning">
+                                            @Html.RouteLink($"Admin", "AdminIndex")
+                                        </li>
+                                        <li role="separator" class="divider"></li>
+                                    }
+                                    @if (User.IsInRole("Log"))
+                                    {
+                                        <li class="text-warning">
+                                            @Html.RouteLink($"Logs", "LogIndex")
+                                        </li>
+                                        <li role="separator" class="divider"></li>
+                                    }
                                     <li><a href="javascript:document.getElementById('logoutForm').submit()"><span class="glyphicon glyphicon-off"></span> Log out</a></li>
                                 </ul>
                             </li>

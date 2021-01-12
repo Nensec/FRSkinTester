@@ -1,4 +1,5 @@
-﻿using FRTools.Data;
+﻿using FRTools.Common;
+using FRTools.Data;
 using FRTools.Data.DataModels;
 using FRTools.Data.DataModels.NewsReaderModels;
 using System;
@@ -24,6 +25,8 @@ namespace FRTools.NewsReader
 
         static async Task Main()
         {
+            FRToolsLogger.Setup();
+
             var loop = Task.Factory.StartNew(async () =>
             {
                 while (true)

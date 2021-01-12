@@ -30,6 +30,7 @@ namespace FRTools.Data
         // FRTools tables
         public DbSet<Job> Jobs { get; set; }
         public DbSet<ProfileSettings> ProfileSettings { get; set; }
+        public DbSet<LogItem> LogItems { get; set; }
 
         // Skintester tables
         public DbSet<Skin> Skins { get; set; }

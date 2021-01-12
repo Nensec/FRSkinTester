@@ -18,5 +18,6 @@ namespace FRTools.Data.DataModels.DiscordModels
         public long ChannelId { get; set; }
         public string Name { get; set; }
         public DiscordChannelType ChannelType { get; set; }
+        public virtual ICollection<LogItem> LogItems { get; set; } = new HashSet<LogItem>();
     }
 }

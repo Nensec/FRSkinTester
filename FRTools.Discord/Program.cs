@@ -2,12 +2,14 @@
 using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
+using FRTools.Common;
 using FRTools.Data;
 using FRTools.Data.Messages;
 using FRTools.Discord.Handlers;
 using FRTools.Discord.Infrastructure;
 using Microsoft.Azure.ServiceBus;
 using Newtonsoft.Json;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -29,11 +31,15 @@ namespace FRTools.Discord
         private static readonly Dictionary<ulong, GuildHandler> _handlers = new Dictionary<ulong, GuildHandler>();
         private static readonly UnityServiceProvider _unityServiceProvider = new UnityServiceProvider(_container);
         private static IQueueClient _serviceBus;
+        private static FRToolsLogger logger;
 
         static async Task Main()
         {
             using (var ctx = new DataContext())
                 ctx.Database.Initialize(false);
+
+            FRToolsLogger.Setup();
+            logger = LogManager.LogFactory.GetLogger<FRToolsLogger>("DiscordMain");
 
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
@@ -55,6 +61,7 @@ namespace FRTools.Discord
             _container.RegisterInstance(new InteractiveService(_client, new InteractiveServiceConfig { DefaultTimeout = TimeSpan.FromSeconds(15) }));
             _container.RegisterInstance(_serviceBus);
             _container.RegisterType<DataContext>();
+            _container.RegisterInstance(logger);
 
             await _commandService.AddModulesAsync(Assembly.GetEntryAssembly(), _unityServiceProvider);
 
@@ -135,7 +142,22 @@ namespace FRTools.Discord
 
         private static Task Client_Log(LogMessage msg)
         {
-            return Task.Run(() => Console.WriteLine($"[{msg.Severity}] {msg.Message}"));
+            return Task.Run(() =>
+            {
+                switch (msg.Severity)
+                {
+                    case LogSeverity.Critical:
+                    case LogSeverity.Error:
+                        logger.Log(Data.DataModels.LogItemOrigin.Discord, Data.DataModels.LogItemSeverity.Error, msg.Message, msg.Exception);
+                        break;
+                    case LogSeverity.Warning:
+                        logger.Log(Data.DataModels.LogItemOrigin.Discord, Data.DataModels.LogItemSeverity.Warning, msg.Message, msg.Exception);
+                        break;
+                    default:
+                        logger.Log(Data.DataModels.LogItemOrigin.Discord, Data.DataModels.LogItemSeverity.Info, msg.Message, msg.Exception);
+                        break;
+                }
+            });
         }
 
         private static async Task Client_MessageReceived(SocketMessage msg)

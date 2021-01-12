@@ -22,6 +22,8 @@ namespace FRTools.MS.DominanceChecker
 
         static async Task Main()
         {
+            FRToolsLogger.Setup();
+
             _serviceBus = new QueueClient(ConfigurationManager.AppSettings["AzureSBConnString"], ConfigurationManager.AppSettings["AzureSBQueueName"]);
             await _serviceBus.SendAsync(new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new GenericMessage(MessageCategory.DominanceTracker, "Started")))));
             while (true)

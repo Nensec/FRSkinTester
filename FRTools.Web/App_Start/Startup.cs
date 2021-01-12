@@ -47,8 +47,6 @@ namespace FRTools.App_Start
 
             app.UseExternalSignInCookie(DefaultAuthenticationTypes.ExternalCookie);
 
-            //AntiForgeryConfig.UniqueClaimTypeIdentifier = ClaimTypes.NameIdentifier;
-
             app.UseGoogleAuthentication(new GoogleAuthenticationOptions
             {
                 ClientId = ConfigurationManager.AppSettings["GoogleClientId"],
@@ -91,8 +89,15 @@ namespace FRTools.App_Start
 
             using (var ctx = new DataContext())
             {
+                // Cancel any jobs that were set as running, they will never complete anyway since the task is no longer running after a restart
+                // TODO: Make a microservice that handles running these tasks so stuff can restart afterwards
                 var activeJobs = ctx.Jobs.Where(x => x.Status == JobStatus.Running).ToList();
                 activeJobs.ForEach(x => x.Status = JobStatus.Cancelled);
+
+                // Ensure all roles exist
+                foreach (var role in Role.Roles)
+                    _ = ctx.Roles.FirstOrDefault(x => x.Name == role) ?? ctx.Roles.Add(new Role { Name = role });
+
                 ctx.SaveChanges();
             }
         }

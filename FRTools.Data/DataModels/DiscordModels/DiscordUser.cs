@@ -13,5 +13,11 @@ namespace FRTools.Data.DataModels.DiscordModels
         public int Discriminator { get; set; }
         public long UserId { get; set; }
         public virtual ICollection<DiscordServerUser> Servers { get; set; } = new HashSet<DiscordServerUser>();
+        public virtual ICollection<LogItem> LogItems { get; set; } = new HashSet<LogItem>();
+
+        public override string ToString()
+        {
+            return $"{Username}#{Discriminator}";
+        }
     }
 }
