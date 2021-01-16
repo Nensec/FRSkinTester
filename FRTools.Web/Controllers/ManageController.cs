@@ -20,6 +20,9 @@ namespace FRTools.Web.Controllers
     [RoutePrefix("manage")]
     public class ManageController : BaseController
     {
+        // Opting to just store the guids in memory rather than save them in the database
+        private static MemoryCache _verifyCache = new MemoryCache("verifyCache");
+
         private SignInManager<User, int> _signInManager;
         private UserManager<User, int> _userManager;
 
@@ -27,6 +30,9 @@ namespace FRTools.Web.Controllers
 
         public UserManager<User, int> UserManager => _userManager ?? (_userManager = HttpContext.GetOwinContext().GetUserManager<UserManager<User, int>>());
 
+        public ManageController(DataContext dataContext) : base(dataContext)
+        {
+        }
 
         [Route(Name = "ManageAccount")]
         public ActionResult Index()
@@ -34,9 +40,6 @@ namespace FRTools.Web.Controllers
             var model = new AccountViewModel { User = LoggedInUser };
             return View(model);
         }
-
-        // Opting to just store the guids in memory rather than save them in the database
-        static MemoryCache _verifyCache = new MemoryCache("verifyCache");
 
         [Route("verify", Name = "VerifyFR")]
         public ActionResult Verify()

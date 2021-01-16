@@ -1,6 +1,7 @@
 ﻿using FRTools.Common;
 using FRTools.Data.DataModels;
 using FRTools.Data.DataModels.PinglistModels;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Threading.Tasks;
@@ -15,10 +16,8 @@ namespace FRTools.Web.Models
         public List<Pinglist> Pinglists { get; set; } = new List<Pinglist>();
         public string CDNBasePath => ConfigurationManager.AppSettings["CDNBasePath"];
         public bool IsOwn { get; set; }
-        public async Task<string> GetDummyPreviewImage(string skinId, int version)
-        {
-            return (await SkinTester.GenerateOrFetchDummyPreview(skinId, version)).Urls[0];
-        }
+
+        public Func<string, int, string> GetDummyPreviewImage { get; set; }
     }
 
 

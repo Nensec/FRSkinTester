@@ -22,10 +22,15 @@ namespace FRTools.Web.Controllers
     [RoutePrefix("skintester")]
     public class SkinController : BaseController
     {
-        public SkinController()
+        private static Dictionary<(int, int), byte[]> _dummyCache = new Dictionary<(int, int), byte[]>();
+
+        private readonly SkinTester _skinTester;
+
+        public SkinController(DataContext dataContext, SkinTester skinTester) : base(dataContext)
         {
             ViewBag.Logo = "/Content/frskintester.svg";
             ViewBag.PngLogo = "/Content/frskintester.png";
+            _skinTester = skinTester;
         }
 
         [Route(Name = "SkinTesterHome")]
@@ -58,7 +63,7 @@ namespace FRTools.Web.Controllers
                     Title = skin.Title,
                     Description = skin.Description,
                     SkinId = model.SkinId,
-                    PreviewUrl = (await SkinTester.GenerateOrFetchDummyPreview(skin.GeneratedId, skin.Version)).Urls[0],
+                    PreviewUrl = (await _skinTester.GenerateOrFetchDummyPreview(skin.GeneratedId, skin.Version)).Urls[0],
                     Coverage = skin.Coverage,
                     Creator = skin.Creator,
                     DragonType = (DragonType)skin.DragonType,
@@ -84,11 +89,11 @@ namespace FRTools.Web.Controllers
 
             PreviewResult result = null;
             if (model.DragonId != null)
-                result = await SkinTester.GenerateOrFetchPreview(model.SkinId, model.DragonId.Value, model.SwapSilhouette, model.Force);
+                result = await _skinTester.GenerateOrFetchPreview(model.SkinId, model.DragonId.Value, model.SwapSilhouette, model.Force);
             else if (!string.IsNullOrWhiteSpace(model.ScryerUrl))
-                result = await SkinTester.GenerateOrFetchPreview(model.SkinId, model.ScryerUrl, model.Force);
+                result = await _skinTester.GenerateOrFetchPreview(model.SkinId, model.ScryerUrl, model.Force);
             else if (!string.IsNullOrWhiteSpace(model.DressingRoomUrl))
-                result = await SkinTester.GenerateOrFetchPreview(model.SkinId, model.DressingRoomUrl, model.Force);
+                result = await _skinTester.GenerateOrFetchPreview(model.SkinId, model.DressingRoomUrl, model.Force);
 
             if (result == null || !result.Success)
             {
@@ -164,7 +169,7 @@ namespace FRTools.Web.Controllers
             }
             try
             {
-                skinImage = SkinTester.FixPixelFormat(skinImage);
+                skinImage = _skinTester.FixPixelFormat(skinImage);
 
                 model.Skin.InputStream.Position = 0;
                 var url = await azureImageService.WriteImage($@"skins\{randomizedId}.png", model.Skin.InputStream);
@@ -208,7 +213,7 @@ namespace FRTools.Web.Controllers
                 {
                     SkinId = randomizedId,
                     SecretKey = secretKey,
-                    PreviewImageUrl = (await SkinTester.GenerateOrFetchDummyPreview(randomizedId, skin.Version)).Urls[0]
+                    PreviewImageUrl = (await _skinTester.GenerateOrFetchDummyPreview(randomizedId, skin.Version)).Urls[0]
                 });
             }
             catch
@@ -249,7 +254,7 @@ namespace FRTools.Web.Controllers
                 return View(new ManageModelViewModel
                 {
                     Skin = skin,
-                    PreviewImageUrl = (await SkinTester.GenerateOrFetchDummyPreview(skin.GeneratedId, skin.Version)).Urls[0],
+                    PreviewImageUrl = (await _skinTester.GenerateOrFetchDummyPreview(skin.GeneratedId, skin.Version)).Urls[0],
                     PreviewUrl = Url.RouteUrl("Preview", new { SkinId = skin.GeneratedId }, "https"),
                     ShareUrl = skin.ShareUrl
                 });
@@ -306,7 +311,8 @@ namespace FRTools.Web.Controllers
         {
             var model = new ManageSkinsViewModel
             {
-                Skins = LoggedInUser.Skins.ToList()
+                Skins = LoggedInUser.Skins.ToList(),
+                GetDummyPreviewImage = (skinId, version) => _skinTester.GenerateOrFetchDummyPreview(skinId, version).GetAwaiter().GetResult().Urls[0]
             };
             return View(model);
         }
@@ -419,8 +425,6 @@ namespace FRTools.Web.Controllers
             return View();
         }
 
-        static Dictionary<(int, int), byte[]> _dummyCache = new Dictionary<(int, int), byte[]>();
-
         public async Task<ActionResult> GetDummyDragon(int dragonType, int gender)
         {
             if (!_dummyCache.TryGetValue((dragonType, gender), out var bytes))
@@ -467,7 +471,7 @@ namespace FRTools.Web.Controllers
             }).ToList();
 
             foreach (var result in model.Results)
-                result.PreviewUrl = (await SkinTester.GenerateOrFetchDummyPreview(result.SkinId, result.Version)).Urls[0];
+                result.PreviewUrl = (await _skinTester.GenerateOrFetchDummyPreview(result.SkinId, result.Version)).Urls[0];
 
             return View(model);
         }
@@ -567,7 +571,7 @@ namespace FRTools.Web.Controllers
         [Route("dummy", Name = "DummyPreview")]
         public async Task<ActionResult> GenerateOrFetchDummyPreview(string skinid, int version)
         {
-            var result = await SkinTester.GenerateOrFetchDummyPreview(skinid, version);
+            var result = await _skinTester.GenerateOrFetchDummyPreview(skinid, version);
             if (Request.Headers["If-Modified-Since"] != null && result.Cached)
                 return new HttpStatusCodeResult(HttpStatusCode.NotModified, "Not Modified");
             else

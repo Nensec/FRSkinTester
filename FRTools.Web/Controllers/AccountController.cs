@@ -12,6 +12,7 @@ using System.Web.Mvc;
 using System.Net;
 using Newtonsoft.Json;
 using FRTools.Web.Infrastructure.Managers;
+using FRTools.Data;
 
 namespace FRTools.Web.Controllers
 {
@@ -21,6 +22,10 @@ namespace FRTools.Web.Controllers
         private IAuthenticationManager AuthenticationManager => HttpContext.GetOwinContext().Authentication;
         private SignInManager<User, int> _signInManager;
         private UserManager<User, int> _userManager;
+
+        public AccountController(DataContext dataContext) : base(dataContext)
+        {
+        }
 
         public SignInManager<User, int> SignInManager => _signInManager ?? (_signInManager = HttpContext.GetOwinContext().Get<SignInManager<User, int>>());
 

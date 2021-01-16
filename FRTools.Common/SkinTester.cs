@@ -12,9 +12,9 @@ using System.Threading.Tasks;
 
 namespace FRTools.Common
 {
-    public static class SkinTester
+    public class SkinTester
     {
-        public static async Task<PreviewResult> GenerateOrFetchPreview(string skinId, int dragonId, bool swapSilhouette = false, bool force = false, int? version = null)
+        public async Task<PreviewResult> GenerateOrFetchPreview(string skinId, int dragonId, bool swapSilhouette = false, bool force = false, int? version = null)
         {
             var result = new PreviewResult(PreviewSource.DragonId) { Forced = force };
             var dragonUrl = FRHelpers.GetDragonImageUrlFromDragonId(dragonId);
@@ -26,9 +26,9 @@ namespace FRTools.Common
             return await GenerateOrFetchPreview(result, skinId, version, dragon, false, swapSilhouette, force);
         }
 
-        public static async Task<PreviewResult> GenerateOrFetchPreview(string skinId, string dragonUrl, bool force = false, int? version = null)
+        public async Task<PreviewResult> GenerateOrFetchPreview(string skinId, string dragonUrl, bool force = false, int? version = null)
         {
-            PreviewResult result = null;
+            var result = new PreviewResult(PreviewSource.DressingRoom);
             if (dragonUrl.Contains("/dgen/dressing-room"))
             {
                 // Dressing room link
@@ -74,9 +74,9 @@ namespace FRTools.Common
             return result;
         }
 
-        public static async Task<PreviewResult> GenerateOrFetchDummyPreview(string skinId, int version) => await GenerateOrFetchPreview(new PreviewResult(PreviewSource.Dummy), skinId, version, null, false, false, false);
+        public async Task<PreviewResult> GenerateOrFetchDummyPreview(string skinId, int version) => await GenerateOrFetchPreview(new PreviewResult(PreviewSource.Dummy), skinId, version, null, false, false, false);
 
-        private static async Task<PreviewResult> GenerateOrFetchPreview(PreviewResult result, string skinId, int? version, DragonCache dragon, bool isDressingRoom, bool swapSilhouette, bool force)
+        private async Task<PreviewResult> GenerateOrFetchPreview(PreviewResult result, string skinId, int? version, DragonCache dragon, bool isDressingRoom, bool swapSilhouette, bool force)
         {
             using (var ctx = new DataContext())
             {
@@ -263,7 +263,7 @@ namespace FRTools.Common
             return result;
         }
 
-        public static async Task<Bitmap> GetInvisibleDragonWithApparel(DragonCache dragon, bool force = false)
+        public async Task<Bitmap> GetInvisibleDragonWithApparel(DragonCache dragon, bool force = false)
         {
             Bitmap invisibleDwagon;
             var azureUrl = $@"dragoncache\{dragon.FRDragonId}_{dragon.Gender}_invisible.png";
@@ -305,7 +305,7 @@ namespace FRTools.Common
             }
         }
 
-        public static Bitmap FixPixelFormat(Bitmap skinImage)
+        public Bitmap FixPixelFormat(Bitmap skinImage)
         {
             if (skinImage.PixelFormat != PixelFormat.Format32bppArgb)
             {

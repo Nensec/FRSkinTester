@@ -1,4 +1,5 @@
-﻿using FRTools.Web.Models;
+﻿using FRTools.Data;
+using FRTools.Web.Models;
 using System;
 using System.Linq;
 using System.Web.Mvc;
@@ -8,6 +9,10 @@ namespace FRTools.Web.Controllers
     [RoutePrefix("newsreader")]
     public class NewsController : BaseController
     {
+        public NewsController(DataContext dataContext) : base(dataContext)
+        {
+        }
+
         [Route(Name = "NewsReader")]
         public ActionResult Index() // Todo: Paging for the news topic list? 
         {

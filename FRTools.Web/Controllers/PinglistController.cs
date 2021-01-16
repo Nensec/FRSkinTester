@@ -18,6 +18,10 @@ namespace FRTools.Web.Controllers
     [RoutePrefix("pinglist")]
     public class PinglistController : BaseController
     {
+        public PinglistController(DataContext dataContext) : base(dataContext)
+        {
+        }
+
         [Route(Name = "PinglistInfo")]
         public ActionResult Index()
         {

@@ -1,4 +1,5 @@
-﻿using System.Web.Mvc;
+﻿using FRTools.Data;
+using System.Web.Mvc;
 
 namespace FRTools.Web.Controllers
 {
@@ -6,6 +7,10 @@ namespace FRTools.Web.Controllers
     [RoutePrefix("admin")]
     public class AdminController : BaseController
     {
+        public AdminController(DataContext dataContext) : base(dataContext)
+        {
+        }
+
         [Route(Name = "AdminIndex")]
         public ActionResult Index()
         {

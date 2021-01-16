@@ -33,7 +33,7 @@ namespace FRTools.Web.Controllers
                 DiscordBotOwnerId = id;
         }
 
-        public DiscordController()
+        public DiscordController(DataContext dataContext) : base(dataContext)
         {
             ViewBag.PngLogo = "/Content/frtools_discord.png";
             ViewBag.Logo = "/Content/frtools_discord.svg";
@@ -114,7 +114,7 @@ namespace FRTools.Web.Controllers
             });
         }
 
-        private ServerViewModel GetServerViewModel(DataContext DataContext, DiscordUser currentUser, long discordServer)
+        private ServerViewModel GetServerViewModel(DiscordUser currentUser, long discordServer)
         {
             var server = currentUser.Servers.First(x => x.Server.ServerId == discordServer).Server;
             var serverModel = new ServerViewModel
@@ -147,7 +147,7 @@ namespace FRTools.Web.Controllers
             var currentUser = DataContext.DiscordUsers.First(x => x.UserId == _currentUserId);
 
             if (CheckMutualServer(discordServer, currentUser))
-                return View(GetServerViewModel(DataContext, currentUser, discordServer));
+                return View(GetServerViewModel(currentUser, discordServer));
             else
                 return RedirectToRoute("DiscordManage");
         }
@@ -163,7 +163,7 @@ namespace FRTools.Web.Controllers
             {
                 if (CheckModule(module))
                 {
-                    var serverModel = GetServerViewModel(DataContext, currentUser, discordServer);
+                    var serverModel = GetServerViewModel(currentUser, discordServer);
 
                     var model = new DiscordModuleViewModel
                     {

@@ -15,6 +15,14 @@ namespace FRTools.Web.Controllers
     [Authorize]
     public class ProfileController : BaseController
     {
+        private readonly string[] _blacklist = new[] { "edit", "manage" };
+        private readonly SkinTester _skinTester;
+
+        public ProfileController(DataContext dataContext, SkinTester skinTester) : base(dataContext)
+        {
+            _skinTester = skinTester;
+        }
+
         [Route(Name = "SelfProfile")]
         public async Task<ActionResult> Index()
         {
@@ -25,6 +33,7 @@ namespace FRTools.Web.Controllers
                 Skins = LoggedInUser.Skins.ToList(),
                 Pinglists = LoggedInUser.Pinglists.ToList(),
                 IsOwn = true,
+                GetDummyPreviewImage = (skinId, version) => _skinTester.GenerateOrFetchDummyPreview(skinId, version).GetAwaiter().GetResult().Urls[0]
             };
             return View(vm);
         }
@@ -44,7 +53,12 @@ namespace FRTools.Web.Controllers
                 AddErrorNotification("This user's profile is set to private");
                 return RedirectToRoute("Home");
             }
-            var vm = new ViewProfileViewModel { User = user };
+            var vm = new ViewProfileViewModel
+            {
+                User = user,
+                GetDummyPreviewImage = (skinId, version) => _skinTester.GenerateOrFetchDummyPreview(skinId, version).GetAwaiter().GetResult().Urls[0]
+            };
+
             if (user.ProfileSettings.ShowPreviewsOnProfile)
                 vm.Previews = user.Previews.ToList();
             if (user.ProfileSettings.ShowSkinsOnProfile)
@@ -76,8 +90,6 @@ namespace FRTools.Web.Controllers
             };
             return View(vm);
         }
-
-        private readonly string[] _blacklist = new[] { "edit", "manage" };
 
         [HttpPost]
         [Route("edit", Name = "EditProfilePost")]

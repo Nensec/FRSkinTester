@@ -17,8 +17,11 @@ namespace FRTools.Discord.Modules
     [DiscordHelp("SkinTesterModule")]
     public class SkinTesterModule : BaseModule
     {
-        public SkinTesterModule(DataContext dbContext, SettingManager settingManager) : base(dbContext, settingManager)
+        private readonly SkinTester _skinTester;
+
+        public SkinTesterModule(DataContext dbContext, SettingManager settingManager, SkinTester skinTester) : base(dbContext, settingManager)
         {
+            _skinTester = skinTester;
         }
 
         [Command("lookup"), Name("Lookup"), Alias("lu")]
@@ -30,7 +33,7 @@ namespace FRTools.Discord.Modules
                 await ReplyAsync(embed: ErrorEmbed("Skin not found.").Build());
             else
             {
-                var previewUrl = (await SkinTester.GenerateOrFetchDummyPreview(skin.GeneratedId, skin.Version)).Urls[0];
+                var previewUrl = (await _skinTester.GenerateOrFetchDummyPreview(skin.GeneratedId, skin.Version)).Urls[0];
 
                 var embed = new EmbedBuilder();
                 embed.WithTitle(skin.Title ?? "_No title_");
@@ -50,8 +53,11 @@ namespace FRTools.Discord.Modules
         [DiscordHelp("SkinTesterPreview")]
         public class SkinTesterPreview : BaseModule
         {
-            public SkinTesterPreview(DataContext dbContext, SettingManager settingManager) : base(dbContext, settingManager)
+            private readonly SkinTester _skinTester;
+
+            public SkinTesterPreview(DataContext dbContext, SettingManager settingManager, SkinTester skinTester) : base(dbContext, settingManager)
             {
+                _skinTester = skinTester;
             }
 
             [Command]
@@ -59,7 +65,7 @@ namespace FRTools.Discord.Modules
             {
                 await StartPreview().ContinueWith(async msg =>
                 {
-                    var result = await SkinTester.GenerateOrFetchPreview(skinId, dragonId);
+                    var result = await _skinTester.GenerateOrFetchPreview(skinId, dragonId);
                     if (!result.Success)
                         await msg.Result.ModifyAsync(x => x.Embed = ErrorEmbed(result.GetDiscordErrorMessage).Build());
                     else
@@ -75,7 +81,7 @@ namespace FRTools.Discord.Modules
             {
                 await StartPreview().ContinueWith(async msg =>
                 {
-                    var result = await SkinTester.GenerateOrFetchPreview(skinId, dragonId, true);
+                    var result = await _skinTester.GenerateOrFetchPreview(skinId, dragonId, true);
                     if (!result.Success)
                         await msg.Result.ModifyAsync(x => x.Embed = ErrorEmbed(result.GetDiscordErrorMessage).Build());
                     else
@@ -91,7 +97,7 @@ namespace FRTools.Discord.Modules
             {
                 await StartPreview().ContinueWith(async msg =>
                 {
-                    var result = await SkinTester.GenerateOrFetchPreview(skinId, dragonUrl);
+                    var result = await _skinTester.GenerateOrFetchPreview(skinId, dragonUrl);
                     if (!result.Success)
                         await msg.Result.ModifyAsync(x => x.Embed = ErrorEmbed(result.GetDiscordErrorMessage).Build());
                     else

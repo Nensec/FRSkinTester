@@ -1,4 +1,5 @@
-﻿using FRTools.Data.DataModels;
+﻿using FRTools.Data;
+using FRTools.Data.DataModels;
 using System.Linq;
 using System.Web.Mvc;
 
@@ -9,6 +10,10 @@ namespace FRTools.Web.Controllers
     [RoutePrefix("log")]
     public class LogController : BaseController
     {
+        public LogController(DataContext dataContext) : base(dataContext)
+        {
+        }
+
         [Route("", Name = "LogIndex")]
         public ActionResult Index(LogItemSeverity? severity, LogItemOrigin? origin, int? userid, long? discordUser, long? discordChannel, long? discordServer, string messageQuery, string exceptionQuery, int page = 1, int pageSize = 20)
         {

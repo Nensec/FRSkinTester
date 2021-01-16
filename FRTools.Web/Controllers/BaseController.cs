@@ -13,8 +13,13 @@ namespace FRTools.Web.Controllers
 
         protected ActionResult RedirectToLocal(string returnUrl) => Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : (ActionResult)RedirectToAction("Index", "Home");
 
-        protected DataContext DataContext { get; } = new DataContext();
+        protected DataContext DataContext { get; }
         public User LoggedInUser => _loggedInUser ?? (_loggedInUser = GetLoggedInUser());
+
+        public BaseController(DataContext dataContext)
+        {
+            DataContext = dataContext;
+        }
 
         private User GetLoggedInUser()
         {

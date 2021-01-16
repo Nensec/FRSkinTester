@@ -1,5 +1,5 @@
 ﻿using FRTools.Common;
-using FRTools.Web.Infrastructure;
+using FRTools.Data;
 using FRTools.Web.Models;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -12,6 +12,10 @@ namespace FRTools.Web.Controllers
     [RoutePrefix("scryer")]
     public class ScryerController : BaseController
     {
+        public ScryerController(DataContext dataContext) : base(dataContext)
+        {
+        }
+
         [Route("dress", Name = "ScryerDresser")]
         public ActionResult Dress() => View();
 
