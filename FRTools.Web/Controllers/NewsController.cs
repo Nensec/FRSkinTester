@@ -1,4 +1,5 @@
-﻿using FRTools.Data;
+﻿using FRTools.Common;
+using FRTools.Data;
 using FRTools.Web.Models;
 using System;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace FRTools.Web.Controllers
     [RoutePrefix("newsreader")]
     public class NewsController : BaseController
     {
-        public NewsController(DataContext dataContext) : base(dataContext)
+        public NewsController(DataContext dataContext, FRToolsLogger logger) : base(dataContext, logger)
         {
         }
 

@@ -14,8 +14,18 @@ namespace FRTools.Common
 {
     public class SkinTester
     {
+        private readonly FRToolsLogger _logger;
+        private readonly DataContext _dataContext;
+
+        public SkinTester(FRToolsLogger logger, DataContext dataContext)
+        {
+            _logger = logger;
+            _dataContext = dataContext;
+        }
+
         public async Task<PreviewResult> GenerateOrFetchPreview(string skinId, int dragonId, bool swapSilhouette = false, bool force = false, int? version = null)
         {
+            _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"GenerateOrFetchPreview called SkinId:{skinId}, DragonId:{dragonId}, Swap:{swapSilhouette}, Force:{force}, Version:{version}");
             var result = new PreviewResult(PreviewSource.DragonId) { Forced = force };
             var dragonUrl = FRHelpers.GetDragonImageUrlFromDragonId(dragonId);
             if (dragonUrl.StartsWith(".."))
@@ -28,6 +38,8 @@ namespace FRTools.Common
 
         public async Task<PreviewResult> GenerateOrFetchPreview(string skinId, string dragonUrl, bool force = false, int? version = null)
         {
+            _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"GenerateOrFetchPreview called SkinId:{skinId}, DragonUrl:{dragonUrl}, Force:{force}, Version:{version}");
+
             var result = new PreviewResult(PreviewSource.DressingRoom);
             if (dragonUrl.Contains("/dgen/dressing-room"))
             {
@@ -78,43 +90,40 @@ namespace FRTools.Common
 
         private async Task<PreviewResult> GenerateOrFetchPreview(PreviewResult result, string skinId, int? version, DragonCache dragon, bool isDressingRoom, bool swapSilhouette, bool force)
         {
-            using (var ctx = new DataContext())
+            Skin skin;
+            var skins = _dataContext.Skins.Where(x => x.GeneratedId == skinId);
+            if (version == null)
+                skin = skins.OrderByDescending(x => x.Version).FirstOrDefault();
+            else
+                skin = skins.FirstOrDefault(x => x.Version == version);
+
+            if (skin == null)
+                return result.WithErrorMessage("Skin not found.");
+
+            result.Skin = skin;
+
+            if (dragon == null)
+                dragon = FRHelpers.ParseUrlForDragon(string.Format(FRHelpers.DressingRoomDummyUrl, skin.DragonType, skin.GenderType), skinId, version);
+
+            result.Dragon = dragon;
+
+            if (dragon.Age == Age.Hatchling)
             {
-                Skin skin;
-                var skins = ctx.Skins.Where(x => x.GeneratedId == skinId);
-                if (version == null)
-                    skin = skins.OrderByDescending(x => x.Version).FirstOrDefault();
-                else
-                    skin = skins.FirstOrDefault(x => x.Version == version);
-
-                if (skin == null)
-                    return result.WithErrorMessage("Skin not found.");
-
-                result.Skin = skin;
-
-                if (dragon == null)
-                    dragon = FRHelpers.ParseUrlForDragon(string.Format(FRHelpers.DressingRoomDummyUrl, skin.DragonType, skin.GenderType), skinId, version);
-
-                result.Dragon = dragon;
-
-                if (dragon.Age == Age.Hatchling)
-                {
-                    return result.WithErrorMessage("Skins can only be previewed on adult dragons.");
-                }
-
-                if (swapSilhouette)
-                {
-                    var swappedDragon = FRHelpers.ParseUrlForDragon(FRHelpers.GenerateDragonImageUrl(dragon, swapSilhouette));
-                    swappedDragon.FRDragonId = dragon.FRDragonId;
-                    dragon = swappedDragon;
-                }
-
-                if (skin.DragonType != (int)dragon.DragonType)
-                    return result.WithErrorMessage("This skin is meant for a {0} {1}, the dragon you provided is a {2} {3}.", (DragonType)skin.DragonType, (Gender)skin.GenderType, dragon.DragonType, dragon.Gender);
-
-                if (skin.GenderType != (int)dragon.Gender)
-                    return result.WithErrorMessage("This skin is meant for a {0}, the dragon you provided is a {1}.", (Gender)skin.GenderType, dragon.Gender);
+                return result.WithErrorMessage("Skins can only be previewed on adult dragons.");
             }
+
+            if (swapSilhouette)
+            {
+                var swappedDragon = FRHelpers.ParseUrlForDragon(FRHelpers.GenerateDragonImageUrl(dragon, swapSilhouette));
+                swappedDragon.FRDragonId = dragon.FRDragonId;
+                dragon = swappedDragon;
+            }
+
+            if (skin.DragonType != (int)dragon.DragonType)
+                return result.WithErrorMessage("This skin is meant for a {0} {1}, the dragon you provided is a {2} {3}.", (DragonType)skin.DragonType, (Gender)skin.GenderType, dragon.DragonType, dragon.Gender);
+
+            if (skin.GenderType != (int)dragon.Gender)
+                return result.WithErrorMessage("This skin is meant for a {0}, the dragon you provided is a {1}.", (Gender)skin.GenderType, dragon.Gender);
 
             Bitmap dragonImage = null;
 

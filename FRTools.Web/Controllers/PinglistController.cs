@@ -18,7 +18,7 @@ namespace FRTools.Web.Controllers
     [RoutePrefix("pinglist")]
     public class PinglistController : BaseController
     {
-        public PinglistController(DataContext dataContext) : base(dataContext)
+        public PinglistController(DataContext dataContext, FRToolsLogger logger) : base(dataContext, logger)
         {
         }
 

@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using FRTools.Common;
 using FRTools.Data;
 using FRTools.Data.DataModels.DiscordModels;
 using FRTools.Data.Messages;
@@ -157,7 +158,7 @@ namespace FRTools.Discord.Handlers
 
             if (msg is IUserMessage message && !message.Author.IsBot && message.Author.Id != _client.CurrentUser.Id)
             {
-                var context = new SocketCommandContext(_client, msg as SocketUserMessage);
+                var context = new FRToolsCommandContext(_client, msg as SocketUserMessage, (FRToolsLogger)_serviceProvider.GetService(typeof(FRToolsLogger)));
 
                 if (message.HasStringPrefix(prefix, ref argPos) && !char.IsNumber(message.Content[argPos]) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))
                 {

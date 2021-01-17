@@ -1,7 +1,6 @@
 ﻿using FRTools.Common;
 using FRTools.Data;
 using FRTools.Data.DataModels;
-using FRTools.Web.Infrastructure;
 using FRTools.Web.Models;
 using Microsoft.AspNet.Identity;
 using System;
@@ -26,7 +25,7 @@ namespace FRTools.Web.Controllers
 
         private readonly SkinTester _skinTester;
 
-        public SkinController(DataContext dataContext, SkinTester skinTester) : base(dataContext)
+        public SkinController(DataContext dataContext, SkinTester skinTester, FRToolsLogger logger) : base(dataContext, logger)
         {
             ViewBag.Logo = "/Content/frskintester.svg";
             ViewBag.PngLogo = "/Content/frskintester.png";

@@ -1,4 +1,5 @@
-﻿using FRTools.Data;
+﻿using FRTools.Common;
+using FRTools.Data;
 using FRTools.Data.DataModels;
 using FRTools.Data.DataModels.DiscordModels;
 using FRTools.Data.Messages;
@@ -33,7 +34,7 @@ namespace FRTools.Web.Controllers
                 DiscordBotOwnerId = id;
         }
 
-        public DiscordController(DataContext dataContext) : base(dataContext)
+        public DiscordController(DataContext dataContext, FRToolsLogger logger) : base(dataContext, logger)
         {
             ViewBag.PngLogo = "/Content/frtools_discord.png";
             ViewBag.Logo = "/Content/frtools_discord.svg";

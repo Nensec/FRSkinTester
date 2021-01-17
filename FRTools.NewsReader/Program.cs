@@ -2,6 +2,7 @@
 using FRTools.Data;
 using FRTools.Data.DataModels;
 using FRTools.Data.DataModels.NewsReaderModels;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -23,9 +24,12 @@ namespace FRTools.NewsReader
             set => _delay = value > _initialDelay ? _initialDelay : value;
         }
 
+        private static FRToolsLogger _logger;
+
         static async Task Main()
         {
-            FRToolsLogger.Setup();
+            FRToolsLogger.Setup(Data.DataModels.LogItemOrigin.NewsReader);
+            _logger = LogManager.LogFactory.GetLogger<FRToolsLogger>("Newsreader");
 
             var loop = Task.Factory.StartNew(async () =>
             {

@@ -5,6 +5,7 @@ using FRTools.Data.DataModels.FlightRisingModels;
 using FRTools.Data.Messages;
 using Microsoft.Azure.ServiceBus;
 using Newtonsoft.Json;
+using NLog;
 using System;
 using System.Configuration;
 using System.IO;
@@ -19,10 +20,12 @@ namespace FRTools.MS.DominanceChecker
     class Program
     {
         private static IQueueClient _serviceBus;
+        private static FRToolsLogger _logger;
 
         static async Task Main()
         {
-            FRToolsLogger.Setup();
+            FRToolsLogger.Setup(Data.DataModels.LogItemOrigin.DominanceChecker);
+            _logger = LogManager.LogFactory.GetLogger<FRToolsLogger>("DominanceChecker");
 
             _serviceBus = new QueueClient(ConfigurationManager.AppSettings["AzureSBConnString"], ConfigurationManager.AppSettings["AzureSBQueueName"]);
             await _serviceBus.SendAsync(new Message(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new GenericMessage(MessageCategory.DominanceTracker, "Started")))));

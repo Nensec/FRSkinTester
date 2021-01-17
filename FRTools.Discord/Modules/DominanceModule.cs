@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using FRTools.Common;
 using FRTools.Data;
 using FRTools.Discord.Handlers;
 using FRTools.Discord.Infrastructure;

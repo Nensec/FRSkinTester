@@ -1,4 +1,5 @@
-﻿using FRTools.Data;
+﻿using FRTools.Common;
+using FRTools.Data;
 using FRTools.Data.DataModels;
 using Microsoft.AspNet.Identity;
 using System.Linq;
@@ -11,14 +12,15 @@ namespace FRTools.Web.Controllers
     {
         private User _loggedInUser;
 
-        protected ActionResult RedirectToLocal(string returnUrl) => Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : (ActionResult)RedirectToAction("Index", "Home");
-
         protected DataContext DataContext { get; }
+        protected FRToolsLogger Logger { get; }
+
         public User LoggedInUser => _loggedInUser ?? (_loggedInUser = GetLoggedInUser());
 
-        public BaseController(DataContext dataContext)
+        public BaseController(DataContext dataContext, FRToolsLogger logger)
         {
             DataContext = dataContext;
+            Logger = logger;
         }
 
         private User GetLoggedInUser()
@@ -67,5 +69,7 @@ namespace FRTools.Web.Controllers
                 TempData["Success"] += success;
             }
         }
+
+        protected ActionResult RedirectToLocal(string returnUrl) => Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : (ActionResult)RedirectToAction("Index", "Home");
     }
 }

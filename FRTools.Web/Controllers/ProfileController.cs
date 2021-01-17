@@ -18,7 +18,7 @@ namespace FRTools.Web.Controllers
         private readonly string[] _blacklist = new[] { "edit", "manage" };
         private readonly SkinTester _skinTester;
 
-        public ProfileController(DataContext dataContext, SkinTester skinTester) : base(dataContext)
+        public ProfileController(DataContext dataContext, SkinTester skinTester, FRToolsLogger logger) : base(dataContext, logger)
         {
             _skinTester = skinTester;
         }

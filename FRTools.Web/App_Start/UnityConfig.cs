@@ -1,5 +1,6 @@
 using FRTools.Common;
 using FRTools.Data;
+using NLog;
 using System;
 
 using Unity;
@@ -40,6 +41,7 @@ namespace FRTools.Web
         /// </remarks>
         public static void RegisterTypes(IUnityContainer container)
         {
+            container.RegisterFactory<FRToolsLogger>(x => LogManager.LogFactory.GetLogger<FRToolsLogger>("Web"));
             container.RegisterType<SkinTester>(new SingletonLifetimeManager());
             container.RegisterType<DataContext>(new PerRequestLifetimeManager());
         }

@@ -1,8 +1,8 @@
 ﻿using FRTools.Data;
 using FRTools.Data.DataModels;
 using NLog;
+using NLog.Config;
 using System;
-using System.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -10,33 +10,32 @@ namespace FRTools.Common
 {
     public class FRToolsLogger : Logger
     {
-        public static void Setup()
+        public LogItemOrigin Origin { get; set; }
+
+        public FRToolsLogger WithOrigin(LogItemOrigin origin)
         {
-            var logConfig = new NLog.Config.LoggingConfiguration();
+            Origin = origin;
+            return this;
+        }
+
+        public static void Setup(LogItemOrigin origin)
+        {
+            var logConfig = new LoggingConfiguration();
 
 #if DEBUG
             var logFile = new NLog.Targets.FileTarget("logfile") { FileName = "${logger}/${date:universalTime=true:format=yyyy-MM-dd}/${date:universalTime=true:format=HH}.log" };
             logConfig.AddRule(LogLevel.Debug, LogLevel.Fatal, logFile);
-
-            var logAzure = new NLog.Targets.BlobStorageTarget
-            {
-                ConnectionString = ConfigurationManager.AppSettings["AzureCredentials"],
-                Name = "Azure",
-                Layout = "${longdate:universalTime=true} ${level:uppercase=true} - ${logger}: ${message} ${exception:format=tostring}",
-                BlobName = "${date:universalTime=true:format=yyyy-MM-dd}/${date:universalTime=true:format=HH}.log",
-                Container = "logs"
-            };
 #else
             var logAzure = new NLog.Targets.BlobStorageTarget
             {
-                ConnectionString = ConfigurationManager.AppSettings["AzureCredentials"],
+                ConnectionString = System.Configuration.ConfigurationManager.AppSettings["AzureCredentials"],
                 Name = "Azure",
                 Layout = "${longdate:universalTime=true} ${level:uppercase=true} - ${logger}: ${message} ${exception:format=tostring}",
                 BlobName = "${date:universalTime=true:format=yyyy-MM-dd}/${date:universalTime=true:format=HH}.log",
                 Container = "logs"
             };
-#endif
             logConfig.AddRule(LogLevel.Debug, LogLevel.Fatal, logAzure);
+#endif
 
             var logConsole = new NLog.Targets.ColoredConsoleTarget("logconsole");
             logConfig.AddRule(LogLevel.Debug, LogLevel.Fatal, logConsole);
@@ -50,6 +49,9 @@ namespace FRTools.Common
             {
                 switch (severity)
                 {
+                    case LogItemSeverity.Debug:
+                        Debug(exception, message);
+                        break;
                     case LogItemSeverity.Info:
                         Info(exception, message);
                         break;
@@ -65,7 +67,7 @@ namespace FRTools.Common
                 {
                     var logItem = ctx.LogItems.Add(new LogItem
                     {
-                        Origin = origin,
+                        Origin = Origin & origin,
                         Severity = severity,
                         Message = message,
                         Exception = exception?.ToString(),

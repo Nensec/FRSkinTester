@@ -12,7 +12,7 @@ namespace FRTools.Web.Controllers
     [RoutePrefix("scryer")]
     public class ScryerController : BaseController
     {
-        public ScryerController(DataContext dataContext) : base(dataContext)
+        public ScryerController(DataContext dataContext, FRToolsLogger logger) : base(dataContext, logger)
         {
         }
 

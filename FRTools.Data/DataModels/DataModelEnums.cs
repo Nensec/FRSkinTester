@@ -25,6 +25,7 @@ namespace FRTools.Data.DataModels
 
     public enum LogItemSeverity
     {
+        Debug,
         Info,
         Warning,
         Error
@@ -33,14 +34,11 @@ namespace FRTools.Data.DataModels
     [Flags]
     public enum LogItemOrigin
     {
+        Unknown = -1,
         Discord = 1,
         Web = 2,
-        Skintester = 4,
-        Newsreader = 10,
-        Pinglist = 16,
-        Profile = 32,
-        AccountManage = 64,
-        Scryer = 130,
-        Dominance = 256
+        NewsReader = 4,
+        DominanceChecker = 8,
+        SkinTester = 16
     }
 }

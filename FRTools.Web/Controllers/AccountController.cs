@@ -13,6 +13,7 @@ using System.Net;
 using Newtonsoft.Json;
 using FRTools.Web.Infrastructure.Managers;
 using FRTools.Data;
+using FRTools.Common;
 
 namespace FRTools.Web.Controllers
 {
@@ -23,7 +24,7 @@ namespace FRTools.Web.Controllers
         private SignInManager<User, int> _signInManager;
         private UserManager<User, int> _userManager;
 
-        public AccountController(DataContext dataContext) : base(dataContext)
+        public AccountController(DataContext dataContext, FRToolsLogger logger) : base(dataContext, logger)
         {
         }
 

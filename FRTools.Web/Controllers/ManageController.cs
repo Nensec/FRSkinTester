@@ -30,7 +30,7 @@ namespace FRTools.Web.Controllers
 
         public UserManager<User, int> UserManager => _userManager ?? (_userManager = HttpContext.GetOwinContext().GetUserManager<UserManager<User, int>>());
 
-        public ManageController(DataContext dataContext) : base(dataContext)
+        public ManageController(DataContext dataContext, FRToolsLogger logger) : base(dataContext, logger)
         {
         }
 

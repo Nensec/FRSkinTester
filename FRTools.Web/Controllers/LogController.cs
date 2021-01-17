@@ -1,4 +1,5 @@
-﻿using FRTools.Data;
+﻿using FRTools.Common;
+using FRTools.Data;
 using FRTools.Data.DataModels;
 using System.Linq;
 using System.Web.Mvc;
@@ -10,7 +11,7 @@ namespace FRTools.Web.Controllers
     [RoutePrefix("log")]
     public class LogController : BaseController
     {
-        public LogController(DataContext dataContext) : base(dataContext)
+        public LogController(DataContext dataContext, FRToolsLogger logger) : base(dataContext, logger)
         {
         }
 

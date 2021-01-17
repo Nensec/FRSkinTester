@@ -1,5 +1,5 @@
-﻿using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
+﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using System.Configuration;
 using System.IO;
 using System.Linq;
@@ -15,7 +15,7 @@ namespace FRTools.Common
             var container = GetStorageContainer(path);
 
             var fileName = Path.GetFileName(path);
-            var reference = container.GetBlockBlobReference(fileName);
+            var reference = container.GetBlobClient(fileName);
             if (reference.Exists())
             {
                 await reference.DeleteAsync();
@@ -30,11 +30,11 @@ namespace FRTools.Common
 
             var fileName = Path.GetFileName(path);
 
-            var reference = directory.GetBlockBlobReference(fileName);
+            var reference = directory.GetBlobClient(fileName);
 
             if (reference.Exists())
             {
-                await reference.DownloadToStreamAsync(resultStream);
+                await reference.DownloadToAsync(resultStream);
                 resultStream.Position = 0;
                 return resultStream;
             }
@@ -46,10 +46,9 @@ namespace FRTools.Common
             var directory = GetStorageContainer(path);
 
             var fileName = Path.GetFileName(path);
-            var reference = directory.GetBlockBlobReference(fileName);
-            reference.Properties.ContentType = MimeMapping.GetMimeMapping(fileName);
+            var reference = directory.GetBlobClient(fileName);
 
-            await reference.UploadFromStreamAsync(stream);
+            await reference.UploadAsync(stream, new BlobUploadOptions { HttpHeaders = new BlobHttpHeaders { ContentType = MimeMapping.GetMimeMapping(fileName) }, Conditions = null });
 
             return reference.Uri.AbsolutePath;
         }
@@ -59,22 +58,20 @@ namespace FRTools.Common
             var directory = GetStorageContainer(path);
 
             var fileName = Path.GetFileName(path);
-            var reference = directory.GetBlockBlobReference(fileName);
+            var reference = directory.GetBlobClient(fileName);
             url = reference.Exists() ? reference.Uri.AbsolutePath : null;
             return url != null;
         }
 
-        private CloudBlobDirectory GetStorageContainer(string path)
+        private BlobContainerClient GetStorageContainer(string path)
         {
             var credentials = ConfigurationManager.AppSettings["AzureCredentials"];
 
-            var storageAccount = CloudStorageAccount.Parse(credentials);
-            var blobClient = storageAccount.CreateCloudBlobClient();
+            var client = new BlobServiceClient(credentials);
 
             var directoryPath = Path.GetDirectoryName(string.Join(Path.DirectorySeparatorChar.ToString(), path.Split(Path.DirectorySeparatorChar).Skip(1)));
 
-            var container = blobClient.GetContainerReference(path.Split(Path.DirectorySeparatorChar)[0]);
-            return container.GetDirectoryReference(directoryPath);
+            return client.GetBlobContainerClient(path);
         }
     }
 }

@@ -4,6 +4,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using FRTools.Common;
 using FRTools.Data;
+using FRTools.Data.DataModels;
 using FRTools.Data.Messages;
 using FRTools.Discord.Handlers;
 using FRTools.Discord.Infrastructure;
@@ -19,6 +20,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Unity;
+using Unity.Lifetime;
 using Unity.Resolution;
 
 namespace FRTools.Discord
@@ -31,15 +33,14 @@ namespace FRTools.Discord
         private static readonly Dictionary<ulong, GuildHandler> _handlers = new Dictionary<ulong, GuildHandler>();
         private static readonly UnityServiceProvider _unityServiceProvider = new UnityServiceProvider(_container);
         private static IQueueClient _serviceBus;
-        private static FRToolsLogger logger;
+        private static FRToolsLogger _logger;
 
         static async Task Main()
         {
+            FRToolsLogger.Setup(LogItemOrigin.Discord);
+
             using (var ctx = new DataContext())
                 ctx.Database.Initialize(false);
-
-            FRToolsLogger.Setup();
-            logger = LogManager.LogFactory.GetLogger<FRToolsLogger>("DiscordMain");
 
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
@@ -50,7 +51,6 @@ namespace FRTools.Discord
                 LogSeverity.Warning
 #endif
             });
-            _client.Log += Client_Log;
             _serviceBus = new QueueClient(ConfigurationManager.AppSettings["AzureSBConnString"], ConfigurationManager.AppSettings["AzureSBQueueName"]);
 
             _container.RegisterInstance(_commandService = new CommandService());
@@ -61,7 +61,10 @@ namespace FRTools.Discord
             _container.RegisterInstance(new InteractiveService(_client, new InteractiveServiceConfig { DefaultTimeout = TimeSpan.FromSeconds(15) }));
             _container.RegisterInstance(_serviceBus);
             _container.RegisterType<DataContext>();
-            _container.RegisterInstance(logger);
+            _container.RegisterFactory<FRToolsLogger>(x => LogManager.LogFactory.GetLogger<FRToolsLogger>("Discord").WithOrigin(LogItemOrigin.Discord));
+
+            _logger = _container.Resolve<FRToolsLogger>();
+            _client.Log += Client_Log;
 
             await _commandService.AddModulesAsync(Assembly.GetEntryAssembly(), _unityServiceProvider);
 
@@ -148,13 +151,13 @@ namespace FRTools.Discord
                 {
                     case LogSeverity.Critical:
                     case LogSeverity.Error:
-                        logger.Log(Data.DataModels.LogItemOrigin.Discord, Data.DataModels.LogItemSeverity.Error, msg.Message, msg.Exception);
+                        _logger.Log(Data.DataModels.LogItemOrigin.Discord, Data.DataModels.LogItemSeverity.Error, msg.Message, msg.Exception);
                         break;
                     case LogSeverity.Warning:
-                        logger.Log(Data.DataModels.LogItemOrigin.Discord, Data.DataModels.LogItemSeverity.Warning, msg.Message, msg.Exception);
+                        _logger.Log(Data.DataModels.LogItemOrigin.Discord, Data.DataModels.LogItemSeverity.Warning, msg.Message, msg.Exception);
                         break;
                     default:
-                        logger.Log(Data.DataModels.LogItemOrigin.Discord, Data.DataModels.LogItemSeverity.Info, msg.Message, msg.Exception);
+                        _logger.Log(Data.DataModels.LogItemOrigin.Discord, Data.DataModels.LogItemSeverity.Info, msg.Message, msg.Exception);
                         break;
                 }
             });
@@ -175,7 +178,7 @@ namespace FRTools.Discord
                 {
                     if (msg is IUserMessage && msg.Author.Id != _client.CurrentUser.Id)
                     {
-                        var context = new SocketCommandContext(_client, msg as SocketUserMessage);
+                        var context = new FRToolsCommandContext(_client, msg as SocketUserMessage, _container.Resolve<FRToolsLogger>());
                         var command = _commandService.ExecuteAsync(context, argPos, _unityServiceProvider);
                         var result = await command;
 

@@ -1,11 +1,12 @@
-﻿using FRTools.Data;
+﻿using FRTools.Common;
+using FRTools.Data;
 using System.Web.Mvc;
 
 namespace FRTools.Web.Controllers
 {
     public class HomeController : BaseController
     {
-        public HomeController(DataContext dataContext) : base(dataContext)
+        public HomeController(DataContext dataContext, FRToolsLogger logger) : base(dataContext, logger)
         {
         }
 
