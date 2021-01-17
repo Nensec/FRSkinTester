@@ -178,7 +178,7 @@ namespace FRTools.Discord
                 {
                     if (msg is IUserMessage && msg.Author.Id != _client.CurrentUser.Id)
                     {
-                        var context = new FRToolsCommandContext(_client, msg as SocketUserMessage, _container.Resolve<FRToolsLogger>());
+                        var context = new SocketCommandContext(_client, msg as SocketUserMessage);
                         var command = _commandService.ExecuteAsync(context, argPos, _unityServiceProvider);
                         var result = await command;
 

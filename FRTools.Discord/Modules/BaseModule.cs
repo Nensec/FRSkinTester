@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Addons.Interactive;
 using Discord.Commands;
+using FRTools.Common;
 using FRTools.Data;
 using FRTools.Data.DataModels.DiscordModels;
 using FRTools.Discord.Infrastructure;
@@ -11,10 +12,11 @@ using Color = Discord.Color;
 
 namespace FRTools.Discord.Modules
 {
-    public class BaseModule : InteractiveBase<FRToolsCommandContext>
+    public class BaseModule : InteractiveBase
     {
         protected DataContext DbContext { get; }
         protected SettingManager SettingManager { get; }
+        protected FRToolsLogger Logger { get; }
         protected DiscordServer Server { get; private set; }
         protected DiscordChannel Channel { get; private set; }
 
@@ -39,10 +41,11 @@ namespace FRTools.Discord.Modules
             }
         }
 
-        public BaseModule(DataContext dbContext, SettingManager settingManager)
+        public BaseModule(DataContext dbContext, SettingManager settingManager, FRToolsLogger logger)
         {
             DbContext = dbContext;
             SettingManager = settingManager;
+            Logger = logger;
         }
 
         protected override void BeforeExecute(CommandInfo command)
@@ -54,7 +57,7 @@ namespace FRTools.Discord.Modules
                 DbContext.SaveChanges();
             }
 
-            Context.Logger.Log(Data.DataModels.LogItemOrigin.Discord, Data.DataModels.LogItemSeverity.Info, $"Begin command execute: {command.Module.Name}.{command.Name}", discordUser: (long)Context.User.Id, discordChannel: (long)Context.Channel.Id, discordServer: (long?)Context.Guild?.Id);
+            Logger.Log(Data.DataModels.LogItemOrigin.Discord, Data.DataModels.LogItemSeverity.Info, $"Begin command execute: {command.Module.Name}.{command.Name}", discordUser: (long)Context.User.Id, discordChannel: (long)Context.Channel.Id, discordServer: (long?)Context.Guild?.Id);
             base.BeforeExecute(command);
         }
 
@@ -65,10 +68,10 @@ namespace FRTools.Discord.Modules
                 var discordLog = DbContext.DiscordLogs.Add(new DiscordLog { Channel = Channel, UserId = (long)Context.User.Id, Module = command.Module.Name, Command = command.Name, Data = Context.Message.Content });
                 DbContext.SaveChanges();
 
-                Context.Logger.Log(Data.DataModels.LogItemOrigin.Discord, Data.DataModels.LogItemSeverity.Info, $"End command execute: {command.Module.Name}.{command.Name} (DiscordLog Id: {discordLog.Id})", discordUser: (long)Context.User.Id, discordChannel: (long)Context.Channel.Id, discordServer: (long?)Context.Guild?.Id);
+                Logger.Log(Data.DataModels.LogItemOrigin.Discord, Data.DataModels.LogItemSeverity.Info, $"End command execute: {command.Module.Name}.{command.Name} (DiscordLog Id: {discordLog.Id})", discordUser: (long)Context.User.Id, discordChannel: (long)Context.Channel.Id, discordServer: (long?)Context.Guild?.Id);
             }
             else
-                Context.Logger.Log(Data.DataModels.LogItemOrigin.Discord, Data.DataModels.LogItemSeverity.Info, $"End command execute: {command.Module.Name}.{command.Name}", discordUser: (long)Context.User.Id, discordChannel: (long)Context.Channel.Id, discordServer: (long?)Context.Guild?.Id);
+                Logger.Log(Data.DataModels.LogItemOrigin.Discord, Data.DataModels.LogItemSeverity.Info, $"End command execute: {command.Module.Name}.{command.Name}", discordUser: (long)Context.User.Id, discordChannel: (long)Context.Channel.Id, discordServer: (long?)Context.Guild?.Id);
 
             base.AfterExecute(command);
         }

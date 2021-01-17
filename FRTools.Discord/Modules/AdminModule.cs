@@ -12,7 +12,7 @@ namespace FRTools.Discord.Modules
     [NoLog]
     public class AdminModule : BaseModule
     {
-        public AdminModule(DataContext dbContext, SettingManager settingManager) : base(dbContext, settingManager)
+        public AdminModule(DataContext dbContext, SettingManager settingManager, FRToolsLogger logger) : base(dbContext, settingManager, logger)
         {            
         }
 

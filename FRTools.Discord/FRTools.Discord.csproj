@@ -346,7 +346,6 @@
     <Compile Include="Infrastructure\DiscordExtentions.cs" />
     <Compile Include="Infrastructure\DiscordHelpAttribute.cs" />
     <Compile Include="Infrastructure\DiscordSettingAttribute.cs" />
-    <Compile Include="Infrastructure\FRToolsCommandContext.cs" />
     <Compile Include="Preconditions\ExactValuePreconditionAttribute.cs" />
     <Compile Include="Infrastructure\NoLogAttribute.cs" />
     <Compile Include="Infrastructure\SettingManager.cs" />

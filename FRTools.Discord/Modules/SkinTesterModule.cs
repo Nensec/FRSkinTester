@@ -19,7 +19,7 @@ namespace FRTools.Discord.Modules
     {
         private readonly SkinTester _skinTester;
 
-        public SkinTesterModule(DataContext dbContext, SettingManager settingManager, SkinTester skinTester) : base(dbContext, settingManager)
+        public SkinTesterModule(DataContext dbContext, SettingManager settingManager, SkinTester skinTester, FRToolsLogger logger) : base(dbContext, settingManager, logger)
         {
             _skinTester = skinTester;
         }
@@ -55,7 +55,7 @@ namespace FRTools.Discord.Modules
         {
             private readonly SkinTester _skinTester;
 
-            public SkinTesterPreview(DataContext dbContext, SettingManager settingManager, SkinTester skinTester) : base(dbContext, settingManager)
+            public SkinTesterPreview(DataContext dbContext, SettingManager settingManager, SkinTester skinTester, FRToolsLogger logger) : base(dbContext, settingManager, logger)
             {
                 _skinTester = skinTester;
             }

@@ -30,7 +30,7 @@ namespace FRTools.Discord.Modules
     {
         private readonly IServiceProvider _serviceProvider;
 
-        public DominanceModule(DataContext dbContext, SettingManager settingManager, IServiceProvider serviceProvider) : base(dbContext, settingManager)
+        public DominanceModule(DataContext dbContext, SettingManager settingManager, IServiceProvider serviceProvider, FRToolsLogger logger) : base(dbContext, settingManager, logger)
         {
             _serviceProvider = serviceProvider;
         }

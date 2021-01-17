@@ -14,7 +14,7 @@ namespace FRTools.Discord.Modules
     [DiscordHelp("LookupModule")]
     public class LookupModule : BaseModule
     {
-        public LookupModule(DataContext dbContext, SettingManager settingManager) : base(dbContext, settingManager)
+        public LookupModule(DataContext dbContext, SettingManager settingManager, FRToolsLogger logger) : base(dbContext, settingManager, logger)
         {
         }
 
