@@ -207,6 +207,7 @@
     <Compile Include="Jobs\SendUpdateDominanceMessage.cs" />
     <Compile Include="Jobs\UpdatePinglist.cs" />
     <Compile Include="FRToolsLogger.cs" />
+    <Compile Include="LoggingContext.cs" />
     <Compile Include="PinglistHelpers.cs" />
     <Compile Include="PreviewResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

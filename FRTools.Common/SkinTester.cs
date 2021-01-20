@@ -23,22 +23,26 @@ namespace FRTools.Common
             _dataContext = dataContext;
         }
 
-        public async Task<PreviewResult> GenerateOrFetchPreview(string skinId, int dragonId, bool swapSilhouette = false, bool force = false, int? version = null)
+        public async Task<PreviewResult> GenerateOrFetchPreview(LoggingContext logContext, string skinId, int dragonId, bool swapSilhouette = false, bool force = false, int? version = null)
         {
-            _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"GenerateOrFetchPreview called SkinId:{skinId}, DragonId:{dragonId}, Swap:{swapSilhouette}, Force:{force}, Version:{version}");
+            _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"GenerateOrFetchPreview called SkinId:{skinId}, DragonId:{dragonId}, Swap:{swapSilhouette}, Force:{force}, Version:{version}", context: logContext);
             var result = new PreviewResult(PreviewSource.DragonId) { Forced = force };
             var dragonUrl = FRHelpers.GetDragonImageUrlFromDragonId(dragonId);
             if (dragonUrl.StartsWith(".."))
+            {
+                _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Warning, $"GenerateOrFetchPreview failed for SkinId:{skinId}, DragonId: {dragonId} is invalid", context: logContext);
+
                 return result.WithErrorMessage("{0} appears to be an invalid dragon id", dragonId);
+            }
 
             var dragon = FRHelpers.ParseUrlForDragon(dragonUrl);
             dragon.FRDragonId = dragonId;
-            return await GenerateOrFetchPreview(result, skinId, version, dragon, false, swapSilhouette, force);
+            return await GenerateOrFetchPreview(logContext, result, skinId, version, dragon, false, swapSilhouette, force);
         }
 
-        public async Task<PreviewResult> GenerateOrFetchPreview(string skinId, string dragonUrl, bool force = false, int? version = null)
+        public async Task<PreviewResult> GenerateOrFetchPreview(LoggingContext logContext, string skinId, string dragonUrl, bool force = false, int? version = null)
         {
-            _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"GenerateOrFetchPreview called SkinId:{skinId}, DragonUrl:{dragonUrl}, Force:{force}, Version:{version}");
+            _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"GenerateOrFetchPreview called SkinId:{skinId}, DragonUrl:{dragonUrl}, Force:{force}, Version:{version}", context: logContext);
 
             var result = new PreviewResult(PreviewSource.DressingRoom);
             if (dragonUrl.Contains("/dgen/dressing-room"))
@@ -69,7 +73,7 @@ namespace FRTools.Common
                 if (dragon.GetApparel().Length == 0)
                     return result.WithErrorMessage("This dressing room URL contains no apparel.");
 
-                result = await GenerateOrFetchPreview(result, skinId, version, dragon, true, false, force);
+                result = await GenerateOrFetchPreview(logContext, result, skinId, version, dragon, true, false, force);
             }
             else if (dragonUrl.Contains("dgen/preview/dragon"))
             {
@@ -77,7 +81,7 @@ namespace FRTools.Common
                 result = new PreviewResult(PreviewSource.Scry) { Forced = force };
 
                 var dragon = FRHelpers.ParseUrlForDragon(dragonUrl);
-                result = await GenerateOrFetchPreview(result, skinId, version, dragon, false, false, force);
+                result = await GenerateOrFetchPreview(logContext, result, skinId, version, dragon, false, false, force);
             }
             else
                 return result.WithErrorMessage("The URL provided is not valid.");
@@ -86,10 +90,12 @@ namespace FRTools.Common
             return result;
         }
 
-        public async Task<PreviewResult> GenerateOrFetchDummyPreview(string skinId, int version) => await GenerateOrFetchPreview(new PreviewResult(PreviewSource.Dummy), skinId, version, null, false, false, false);
+        public async Task<PreviewResult> GenerateOrFetchDummyPreview(LoggingContext logContext, string skinId, int version) => await GenerateOrFetchPreview(logContext, new PreviewResult(PreviewSource.Dummy), skinId, version, null, false, false, false);
 
-        private async Task<PreviewResult> GenerateOrFetchPreview(PreviewResult result, string skinId, int? version, DragonCache dragon, bool isDressingRoom, bool swapSilhouette, bool force)
+        private async Task<PreviewResult> GenerateOrFetchPreview(LoggingContext logContext, PreviewResult result, string skinId, int? version, DragonCache dragon, bool isDressingRoom, bool swapSilhouette, bool force)
         {
+            _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Info, $"Started generating preview for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id}, force: {force}", context: logContext);
+
             Skin skin;
             var skins = _dataContext.Skins.Where(x => x.GeneratedId == skinId);
             if (version == null)
@@ -98,7 +104,10 @@ namespace FRTools.Common
                 skin = skins.FirstOrDefault(x => x.Version == version);
 
             if (skin == null)
+            {
+                _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Warning, $"Generating failed for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id}, skin not found", context: logContext);
                 return result.WithErrorMessage("Skin not found.");
+            }
 
             result.Skin = skin;
 
@@ -109,6 +118,7 @@ namespace FRTools.Common
 
             if (dragon.Age == Age.Hatchling)
             {
+                _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Warning, $"Generating failed for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id}, supplied dragon is a hatchling", context: logContext);
                 return result.WithErrorMessage("Skins can only be previewed on adult dragons.");
             }
 
@@ -120,14 +130,23 @@ namespace FRTools.Common
             }
 
             if (skin.DragonType != (int)dragon.DragonType)
+            {
+                _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Warning, $"Generating failed for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id}, supplied dragon is a wrong type", context: logContext);
                 return result.WithErrorMessage("This skin is meant for a {0} {1}, the dragon you provided is a {2} {3}.", (DragonType)skin.DragonType, (Gender)skin.GenderType, dragon.DragonType, dragon.Gender);
+            }
 
             if (skin.GenderType != (int)dragon.Gender)
+            {
+                _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Warning, $"Generating failed for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id}, supplied dragon is a wrong gender", context: logContext);
                 return result.WithErrorMessage("This skin is meant for a {0}, the dragon you provided is a {1}.", (Gender)skin.GenderType, dragon.Gender);
+            }
 
             Bitmap dragonImage = null;
 
             var azureImagePreviewPath = $@"previews\{skinId}\{(version == 1 ? "" : $@"{version}\")}{dragon.FRDragonId?.ToString() ?? dragon.ToString()}_{dragon.Gender}.png";
+
+            _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"Attempting to get cached preview for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id}", context: logContext);
+
             dragon.PreviewUrls.TryGetValue(skinId, out var previewUrl);
 
             if (force || (previewUrl == null && !new AzureImageService().Exists(azureImagePreviewPath, out previewUrl)))
@@ -138,6 +157,7 @@ namespace FRTools.Common
                 }
                 catch (Exception ex)
                 {
+                    _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Warning, $"Generating failed for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id}, exception thrown", ex, context: logContext);
                     return result.WithErrorMessage(ex.ToString());
                 }
 
@@ -148,6 +168,8 @@ namespace FRTools.Common
                 var fixPixelFormat = FixPixelFormat((Bitmap)skinImage);
                 if (fixPixelFormat != null)
                 {
+                    _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Info, $"Fixing pixelformat for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id}", context: logContext);
+
                     skinImage = fixPixelFormat;
                     using (var memStream = new MemoryStream())
                     {
@@ -158,10 +180,14 @@ namespace FRTools.Common
                     }
                 }
 
+                _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"Fetching eyemask for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id} for eyetype: {dragon.EyeType}", context: logContext);
+
                 var eyeMask = (Bitmap)Image.FromFile(CodeHelpers.MapPath($@"\Masks\{(int)dragon.DragonType}_{(int)dragon.Gender}_{(dragon.EyeType == EyeType.Primal || dragon.EyeType == EyeType.MultiGaze ? (int)dragon.EyeType : 0)}_{(dragon.EyeType == EyeType.Primal ? (int)dragon.Element : 0)}.png"));
 
                 if (dragon.EyeType == EyeType.MultiGaze)
                 {
+                    _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"Applying normal eye mask first for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id} due to mult-gaze eyetype", context: logContext);
+
                     using (var graphics = Graphics.FromImage(eyeMask))
                     {
                         var normaleye = Image.FromFile(CodeHelpers.MapPath($@"\Masks\{(int)dragon.DragonType}_{(int)dragon.Gender}_0_0.png"));
@@ -169,6 +195,8 @@ namespace FRTools.Common
                         graphics.Save();
                     }
                 }
+
+                _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"Applying eyemask for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id} for eyetype: {dragon.EyeType}", context: logContext);
 
                 for (int x = 0; x < eyeMask.Width; x++)
                 {
@@ -184,6 +212,8 @@ namespace FRTools.Common
                     }
                 }
 
+                _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"Merging skin and dragon for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id}", context: logContext);
+
                 using (var graphics = Graphics.FromImage(dragonImage))
                 {
                     graphics.DrawImage(skinImage, new Rectangle(0, 0, 350, 350));
@@ -194,7 +224,11 @@ namespace FRTools.Common
                     dragonImage.Save(saveImageStream, ImageFormat.Png);
                     saveImageStream.Position = 0;
 
+                    _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"Saving generated preview for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id}", context: logContext);
+
                     previewUrl = await new AzureImageService().WriteImage(azureImagePreviewPath, saveImageStream);
+
+                    _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"Saving generated preview completed for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id} with url: {previewUrl}", context: logContext);
 
                     if (dragon.PreviewUrls.ContainsKey(skinId))
                         dragon.PreviewUrls[skinId] = previewUrl;
@@ -211,8 +245,12 @@ namespace FRTools.Common
 
             async Task<string> GenerateApparelPreview(Bitmap invisibleDragon, string cacheUrl)
             {
+                _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"Generating apparel preview for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id}", context: logContext);
+
                 if (dragonImage == null)
                     dragonImage = (Bitmap)Image.FromStream(await new AzureImageService().GetImage(azureImagePreviewPath));
+
+                _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"Merging apparel and preview for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id}", context: logContext);
 
                 using (var graphics = Graphics.FromImage(dragonImage))
                 {
@@ -224,12 +262,21 @@ namespace FRTools.Common
                     dragonImage.Save(saveApparelImageStream, ImageFormat.Png);
                     saveApparelImageStream.Position = 0;
 
-                    return await new AzureImageService().WriteImage(cacheUrl, saveApparelImageStream);
+                    _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"Saving generated apparel preview for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id}", context: logContext);
+
+                    var apparelPreviewUrl = await new AzureImageService().WriteImage(cacheUrl, saveApparelImageStream);
+
+                    _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"Saving generated apparel preview completed for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id} with url: {apparelPreviewUrl}", context: logContext);
+
+                    return apparelPreviewUrl;
                 }
             }
 
+            _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"Attempting to get cached apparel preview for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id}", context: logContext);
+
             dragon.PreviewUrls.TryGetValue(skinId + "apparel", out var apparelPreviewUrl);
             if (force || apparelPreviewUrl == null)
+            {
                 if (isDressingRoom)
                 {
                     var apparelIds = dragon.GetApparel();
@@ -251,13 +298,14 @@ namespace FRTools.Common
                     var cacheUrl = $@"previews\{skinId}\{dragon.FRDragonId}_{dragon.Gender}_apparel.png";
                     if (force || !new AzureImageService().Exists(cacheUrl, out apparelPreviewUrl))
                     {
-                        var invisibleDragonWithApparel = await GetInvisibleDragonWithApparel(dragon, force);
+                        var invisibleDragonWithApparel = await GetInvisibleDragonWithApparel(logContext, dragon, force);
 
                         if (invisibleDragonWithApparel != null)
                             apparelPreviewUrl = await GenerateApparelPreview(invisibleDragonWithApparel, cacheUrl);
-
                     }
                 }
+            }
+
             if (apparelPreviewUrl != null)
             {
                 if (dragon.PreviewUrls.ContainsKey(skinId + "apparel"))
@@ -272,7 +320,7 @@ namespace FRTools.Common
             return result;
         }
 
-        public async Task<Bitmap> GetInvisibleDragonWithApparel(DragonCache dragon, bool force = false)
+        public async Task<Bitmap> GetInvisibleDragonWithApparel(LoggingContext logContext, DragonCache dragon, bool force = false)
         {
             Bitmap invisibleDwagon;
             var azureUrl = $@"dragoncache\{dragon.FRDragonId}_{dragon.Gender}_invisible.png";

@@ -43,7 +43,7 @@ namespace FRTools.Common
             LogManager.Configuration = logConfig;
         }
 
-        public void Log(LogItemOrigin origin, LogItemSeverity severity, string message, Exception exception = null, User user = null, long? discordUser = null, long? discordServer = null, long? discordChannel = null)
+        public void Log(LogItemOrigin origin, LogItemSeverity severity, string message, Exception exception = null, LoggingContext context = null)
         {
             var _ = Task.Run(() =>
             {
@@ -71,15 +71,15 @@ namespace FRTools.Common
                         Severity = severity,
                         Message = message,
                         Exception = exception?.ToString(),
-                        User = user
+                        User = context.User
                     });
 
-                    if (discordUser != null)
-                        logItem.DiscordUser = ctx.DiscordUsers.FirstOrDefault(x => x.UserId == discordUser);
-                    if (discordChannel != null)
-                        logItem.Channel = ctx.DiscordChannels.FirstOrDefault(x => x.ChannelId == discordChannel);
-                    if (discordServer != null)
-                        logItem.Server = logItem.Channel?.Server ?? ctx.DiscordServers.FirstOrDefault(x => x.ServerId == discordServer);
+                    if (context.DiscordUser != null)
+                        logItem.DiscordUser = ctx.DiscordUsers.FirstOrDefault(x => x.UserId == context.DiscordUser);
+                    if (context.DiscordChannel != null)
+                        logItem.Channel = ctx.DiscordChannels.FirstOrDefault(x => x.ChannelId == context.DiscordChannel);
+                    if (context.DiscordServer != null)
+                        logItem.Server = logItem.Channel?.Server ?? ctx.DiscordServers.FirstOrDefault(x => x.ServerId == context.DiscordServer);
 
                     ctx.SaveChanges();
                 }
