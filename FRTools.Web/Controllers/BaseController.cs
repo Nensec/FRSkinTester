@@ -14,6 +14,7 @@ namespace FRTools.Web.Controllers
 
         protected DataContext DataContext { get; }
         protected FRToolsLogger Logger { get; }
+        protected LoggingContext LoggingContext { get; private set; }
 
         public User LoggedInUser => _loggedInUser ?? (_loggedInUser = GetLoggedInUser());
 
@@ -32,6 +33,12 @@ namespace FRTools.Web.Controllers
             }
 
             return null;
+        }
+
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            LoggingContext = new LoggingContext(LoggedInUser, Session["CurrentDiscordUser"] as long?);
+            base.OnActionExecuting(filterContext);
         }
 
         protected override void EndExecute(System.IAsyncResult asyncResult)

@@ -367,6 +367,7 @@
     <Compile Include="Infrastructure\SmartRequiredAttribute.cs" />
     <Compile Include="Models\AccountModels.cs" />
     <Compile Include="Models\DiscordModels.cs" />
+    <Compile Include="Models\LogModels.cs" />
     <Compile Include="Models\ManageModels.cs" />
     <Compile Include="Models\NewsModels.cs" />
     <Compile Include="Models\PinglistModels.cs" />

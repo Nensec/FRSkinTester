@@ -33,7 +33,7 @@ namespace FRTools.Web.Controllers
                 Skins = LoggedInUser.Skins.ToList(),
                 Pinglists = LoggedInUser.Pinglists.ToList(),
                 IsOwn = true,
-                GetDummyPreviewImage = (skinId, version) => _skinTester.GenerateOrFetchDummyPreview(skinId, version).GetAwaiter().GetResult().Urls[0]
+                GetDummyPreviewImage = (skinId, version) => _skinTester.GenerateOrFetchDummyPreview(LoggingContext, skinId, version).GetAwaiter().GetResult().Urls[0]
             };
             return View(vm);
         }
@@ -56,7 +56,7 @@ namespace FRTools.Web.Controllers
             var vm = new ViewProfileViewModel
             {
                 User = user,
-                GetDummyPreviewImage = (skinId, version) => _skinTester.GenerateOrFetchDummyPreview(skinId, version).GetAwaiter().GetResult().Urls[0]
+                GetDummyPreviewImage = (skinId, version) => _skinTester.GenerateOrFetchDummyPreview(LoggingContext, skinId, version).GetAwaiter().GetResult().Urls[0]
             };
 
             if (user.ProfileSettings.ShowPreviewsOnProfile)
