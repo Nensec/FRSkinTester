@@ -1,6 +1,5 @@
 ﻿using FRTools.Data;
 using FRTools.Data.DataModels.FlightRisingModels;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,7 +7,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Color = FRTools.Data.Color;
@@ -25,8 +23,6 @@ namespace FRTools.Common
         public const string DressingRoomDummyApparalUrl = "https://www1.flightrising.com/dgen/dressing-room/dummy?breed={0}&gender={1}&apparel={2}";
 
         public static string GetRenderUrl(int dragonId) => $"https://www1.flightrising.com/rendern/350/{(Math.Floor(dragonId / 100d) + 1)}/{dragonId}_350.png";
-
-        public static bool IsAncientBreed(DragonType type) => type == DragonType.Gaoler || type == DragonType.Banescale || type == DragonType.Veilspun;
 
         private static Dictionary<string, DragonCache> Cache { get; } = new Dictionary<string, DragonCache>(StringComparer.InvariantCultureIgnoreCase);
 
@@ -131,7 +127,7 @@ namespace FRTools.Common
                     if ((regexParse = Regex.Match(dragonUrl, @"age=([\d]*)")).Success)
                         dragon.Age = (Age)int.Parse(regexParse.Groups[1].Value);
 
-                    if (dragon.Age == Age.Adult)
+                    if (dragon.Age == Age.Dragon)
                         ctx.SaveChanges();
                 }
             }
@@ -166,72 +162,11 @@ namespace FRTools.Common
             {
                 var htmlPage = client.DownloadString(scryUrl);
                 var scryPageUrlParse = Regex.Match(htmlPage, @"breed=(\d+)&gender=(\d+)&age=(\d+)&bodygene=(\d+)&body=(\d+)&winggene=(\d+)&wings=(\d+)&tertgene=(\d+)&tert=(\d+)&element=(\d+)&eyetype=(\d+)");
-                return GenerateDragonImageUrl(int.Parse(scryPageUrlParse.Groups[1].Value), int.Parse(scryPageUrlParse.Groups[2].Value), int.Parse(scryPageUrlParse.Groups[3].Value),
+                return GeneratedFRHelpers.GenerateDragonImageUrl(int.Parse(scryPageUrlParse.Groups[1].Value), int.Parse(scryPageUrlParse.Groups[2].Value), int.Parse(scryPageUrlParse.Groups[3].Value),
                     int.Parse(scryPageUrlParse.Groups[4].Value), int.Parse(scryPageUrlParse.Groups[5].Value), int.Parse(scryPageUrlParse.Groups[6].Value),
                     int.Parse(scryPageUrlParse.Groups[7].Value), int.Parse(scryPageUrlParse.Groups[8].Value), int.Parse(scryPageUrlParse.Groups[9].Value),
                     int.Parse(scryPageUrlParse.Groups[10].Value), int.Parse(scryPageUrlParse.Groups[11].Value));
             }
-        }
-
-        public static string GenerateDragonImageUrl(DragonCache dragon, bool swapSilhouette = false)
-        {
-            var gender = swapSilhouette ? (dragon.Gender == Gender.Male ? Gender.Female : Gender.Male) : dragon.Gender;
-            switch (dragon.DragonType)
-            {
-                case DragonType.Gaoler:
-                    return GenerateDragonImageUrl(dragon.DragonType, gender, dragon.Age, (GaolerBodyGene)dragon.BodyGene,
-                        dragon.BodyColor, (GaolerWingGene)dragon.WingGene, dragon.WingColor, (GaolerTertGene)dragon.TertiaryGene,
-                        dragon.TertiaryColor, dragon.Element, dragon.EyeType);
-                case DragonType.Banescale:
-                    return GenerateDragonImageUrl(dragon.DragonType, gender, dragon.Age, (BanescaleBodyGene)dragon.BodyGene,
-                        dragon.BodyColor, (BanescaleWingGene)dragon.WingGene, dragon.WingColor, (BanescaleTertGene)dragon.TertiaryGene,
-                        dragon.TertiaryColor, dragon.Element, dragon.EyeType);
-                case DragonType.Veilspun:
-                    return GenerateDragonImageUrl(dragon.DragonType, gender, dragon.Age, (VeilspunBodyGene)dragon.BodyGene,
-                        dragon.BodyColor, (VeilspunWingGene)dragon.WingGene, dragon.WingColor, (VeilspunTertGene)dragon.TertiaryGene,
-                        dragon.TertiaryColor, dragon.Element, dragon.EyeType);
-                default:
-                    return GenerateDragonImageUrl(dragon.DragonType, gender, dragon.Age, (BodyGene)dragon.BodyGene,
-                        dragon.BodyColor, (WingGene)dragon.WingGene, dragon.WingColor, (TertiaryGene)dragon.TertiaryGene,
-                        dragon.TertiaryColor, dragon.Element, dragon.EyeType);
-            }
-        }
-
-        public static string GenerateDragonImageUrl(DragonType breed, Gender gender, Age age, BodyGene bodygene, Color body, WingGene winggene, Color wings, TertiaryGene tertgene, Color tert, Element element, EyeType eyetype)
-            => GenerateDragonImageUrl((int)breed, (int)gender, (int)age, (int)bodygene, (int)body, (int)winggene, (int)wings, (int)tertgene, (int)tert, (int)element, (int)eyetype);
-
-        public static string GenerateDragonImageUrl(DragonType breed, Gender gender, Age age, GaolerBodyGene bodygene, Color body, GaolerWingGene winggene, Color wings, GaolerTertGene tertgene, Color tert, Element element, EyeType eyetype)
-            => GenerateDragonImageUrl((int)breed, (int)gender, (int)age, (int)bodygene, (int)body, (int)winggene, (int)wings, (int)tertgene, (int)tert, (int)element, (int)eyetype);
-
-        public static string GenerateDragonImageUrl(DragonType breed, Gender gender, Age age, BanescaleBodyGene bodygene, Color body, BanescaleWingGene winggene, Color wings, BanescaleTertGene tertgene, Color tert, Element element, EyeType eyetype)
-            => GenerateDragonImageUrl((int)breed, (int)gender, (int)age, (int)bodygene, (int)body, (int)winggene, (int)wings, (int)tertgene, (int)tert, (int)element, (int)eyetype);
-
-        public static string GenerateDragonImageUrl(DragonType breed, Gender gender, Age age, VeilspunBodyGene bodygene, Color body, VeilspunWingGene winggene, Color wings, VeilspunTertGene tertgene, Color tert, Element element, EyeType eyetype)
-            => GenerateDragonImageUrl((int)breed, (int)gender, (int)age, (int)bodygene, (int)body, (int)winggene, (int)wings, (int)tertgene, (int)tert, (int)element, (int)eyetype);
-
-        public static string GenerateDragonImageUrl(int breed, int gender, int age, int bodygene, int body, int winggene, int wings, int tertgene, int tert, int element, int eyetype)
-        {
-            using (var client = new WebClient())
-            {
-                var result = client.UploadValues("https://www1.flightrising.com/scrying/ajax-predict", new System.Collections.Specialized.NameValueCollection
-                {
-                    { "breed", breed.ToString() },
-                    { "gender", gender.ToString() },
-                    { "age", age.ToString() },
-                    { "bodygene", bodygene.ToString() },
-                    { "body", body.ToString() },
-                    { "winggene", winggene.ToString() },
-                    { "wings", wings.ToString() },
-                    { "tertgene", tertgene.ToString() },
-                    { "tert", tert.ToString() },
-                    { "element", element.ToString() },
-                    { "eyetype", eyetype.ToString() },
-                });
-                var str = Encoding.UTF8.GetString(result);
-                var dragonUrl = JsonConvert.DeserializeObject<dynamic>(str).dragon_url;
-                return "https://www1.flightrising.com" + dragonUrl;
-            }
-
         }
 
         public static DragonCache GetDragonFromDragonId(int dragonId) => ParseUrlForDragon(GetDragonImageUrlFromDragonId(dragonId));
@@ -253,7 +188,7 @@ namespace FRTools.Common
 
             using (var client = new WebClient())
             {
-                
+
                 var dwagonImageBytes = await client.DownloadDataTaskAsync(dragon.ConstructImageString() ?? string.Format(DressingRoomDummyUrl, (int)dragon.DragonType, (int)dragon.Gender));
                 using (var memStream = new MemoryStream(dwagonImageBytes, false))
                     await azureImageService.WriteImage(azureUrl, memStream);

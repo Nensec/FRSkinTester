@@ -86,8 +86,6 @@ namespace FRTools.Web.Models
 
         [IgnoreRequired]
         public bool Force { get; set; }
-
-        public bool IsAncientBreed => DragonType == DragonType.Gaoler || DragonType == DragonType.Banescale || DragonType == DragonType.Veilspun;
     }
 
     public class PreviewModelPostViewModel : BaseSkinModel

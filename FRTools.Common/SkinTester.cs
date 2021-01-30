@@ -66,7 +66,7 @@ namespace FRTools.Common
                     dragon = FRHelpers.GetDragonFromDragonId(dragonId);
                 }
 
-                if (FRHelpers.IsAncientBreed(dragon.DragonType))
+                if (dragon.DragonType.IsAncientBreed())
                     return result.WithErrorMessage("Ancient breeds cannot wear apparal.");
 
                 dragon.Apparel = apparelDragon.Apparel;
@@ -124,7 +124,7 @@ namespace FRTools.Common
 
             if (swapSilhouette)
             {
-                var swappedDragon = FRHelpers.ParseUrlForDragon(FRHelpers.GenerateDragonImageUrl(dragon, swapSilhouette));
+                var swappedDragon = FRHelpers.ParseUrlForDragon(GeneratedFRHelpers.GenerateDragonImageUrl(dragon, swapSilhouette));
                 swappedDragon.FRDragonId = dragon.FRDragonId;
                 dragon = swappedDragon;
             }
@@ -147,7 +147,7 @@ namespace FRTools.Common
 
             _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"Attempting to get cached preview for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id}", context: logContext);
 
-            dragon.PreviewUrls.TryGetValue(skinId, out var previewUrl);
+            dragon.PreviewUrls.TryGetValue((skinId, version ?? 1), out var previewUrl);
 
             if (force || (previewUrl == null && !new AzureImageService().Exists(azureImagePreviewPath, out previewUrl)))
             {
@@ -230,10 +230,10 @@ namespace FRTools.Common
 
                     _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"Saving generated preview completed for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id} with url: {previewUrl}", context: logContext);
 
-                    if (dragon.PreviewUrls.ContainsKey(skinId))
-                        dragon.PreviewUrls[skinId] = previewUrl;
+                    if (dragon.PreviewUrls.ContainsKey((skinId, version ?? 1)))
+                        dragon.PreviewUrls[(skinId, version ?? 1)] = previewUrl;
                     else
-                        dragon.PreviewUrls.Add(skinId, previewUrl);
+                        dragon.PreviewUrls.Add((skinId, version ?? 1), previewUrl);
                 }
             }
             else
@@ -274,7 +274,7 @@ namespace FRTools.Common
 
             _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"Attempting to get cached apparel preview for skin: {skinId} version {version ?? 1}, DragonCache: {dragon.Id}", context: logContext);
 
-            dragon.PreviewUrls.TryGetValue(skinId + "apparel", out var apparelPreviewUrl);
+            dragon.PreviewUrls.TryGetValue((skinId + "apparel", version ?? 1), out var apparelPreviewUrl);
             if (force || apparelPreviewUrl == null)
             {
                 if (isDressingRoom)
@@ -293,7 +293,7 @@ namespace FRTools.Common
                         apparelPreviewUrl = await GenerateApparelPreview(invisibleDragon, cacheUrl);
                     }
                 }
-                else if (dragon.FRDragonId.HasValue && !FRHelpers.IsAncientBreed(dragon.DragonType))
+                else if (dragon.FRDragonId.HasValue && !dragon.DragonType.IsAncientBreed())
                 {
                     var cacheUrl = $@"previews\{skinId}\{dragon.FRDragonId}_{dragon.Gender}_apparel.png";
                     if (force || !new AzureImageService().Exists(cacheUrl, out apparelPreviewUrl))
@@ -308,10 +308,10 @@ namespace FRTools.Common
 
             if (apparelPreviewUrl != null)
             {
-                if (dragon.PreviewUrls.ContainsKey(skinId + "apparel"))
-                    dragon.PreviewUrls[skinId + "apparel"] = previewUrl;
+                if (dragon.PreviewUrls.ContainsKey((skinId + "apparel", version ?? 1)))
+                    dragon.PreviewUrls[(skinId + "apparel", version ?? 1)] = previewUrl;
                 else
-                    dragon.PreviewUrls.Add(skinId + "apparel", previewUrl);
+                    dragon.PreviewUrls.Add((skinId + "apparel", version ?? 1), previewUrl);
 
                 result.Urls = new[] { previewUrl, apparelPreviewUrl };
             }

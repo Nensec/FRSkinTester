@@ -1,0 +1,538 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Xml" #>
+<#@ assembly name="$(packagesFolder)\HtmlAgilityPack.1.11.24\lib\Net45\HtmlAgilityPack.dll" #>
+<#@ assembly name="$(packagesFolder)\ExCSS.4.1.0\lib\net48\ExCSS.dll" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="HtmlAgilityPack" #>
+<#@ import namespace="ExCSS" #>
+<#@ output extension=".cs" #>
+<#
+	var page = new Page();
+
+	var htmlClient = new HtmlWeb();
+	var predictPage = htmlClient.Load("https://www1.flightrising.com/scrying/predict");
+
+	var cssPageUrl = predictPage.DocumentNode.SelectNodes(@"/html/head/link").First(x => x.Attributes["href"].Value.StartsWith("https://www1.flightrising.com/assets/application")).Attributes["href"].Value;
+
+	var dragonBreeds = predictPage.DocumentNode.SelectNodes(@"//*[@id=""predict-morphology""]/div[2]/div[1]/div[2]/select/option");
+	foreach(var breedOption in dragonBreeds)
+	{
+		var breed = new DragonBreed();
+		breed.Name = breedOption.InnerHtml;
+		breed.Value = int.Parse(breedOption.Attributes["value"].Value);
+		breed.Type = breedOption.Attributes["data-type"].Value;
+
+		page.Breeds.Add(breed);
+	}
+
+	var genders = predictPage.DocumentNode.SelectNodes(@"//*[@id=""predict-morphology""]/div[2]/div[2]/div[2]/select/option");
+	foreach(var genderOption in genders)
+	{
+		var gender = new Gender();
+		gender.Name = genderOption.InnerHtml;
+		gender.Value = int.Parse(genderOption.Attributes["value"].Value);
+
+		page.Genders.Add(gender);
+	}
+
+	var ages = predictPage.DocumentNode.SelectNodes(@"//*[@id=""predict-morphology""]/div[2]/div[3]/div[2]/select/option");
+	foreach(var ageOption in ages)
+	{
+		var age = new Age();
+		age.Name = ageOption.InnerHtml;
+		age.Value = int.Parse(ageOption.Attributes["value"].Value);
+
+		page.Ages.Add(age);
+	}
+
+	var elements = predictPage.DocumentNode.SelectNodes(@"//*[@id=""predict-morphology""]/div[2]/div[10]/div[2]/select/option");
+	foreach(var elementOption in elements)
+	{
+		var element = new Element();
+		element.Name = elementOption.InnerHtml;
+		element.Value = int.Parse(elementOption.Attributes["value"].Value);
+
+		page.Elements.Add(element);
+	}
+
+	var eyeTypes = predictPage.DocumentNode.SelectNodes(@"//*[@id=""predict-morphology""]/div[2]/div[11]/div[2]/select/option");
+	foreach(var eyeTypeOption in eyeTypes)
+	{
+		var eyeType = new EyeType();
+		eyeType.Name = eyeTypeOption.InnerHtml;
+		eyeType.Value = int.Parse(eyeTypeOption.Attributes["value"].Value);
+
+		page.EyeTypes.Add(eyeType);
+	}
+
+	var primaryGenes = predictPage.DocumentNode.SelectNodes(@"//*[@id=""predict-morphology""]/div[2]/div[4]/div[2]/select/option");
+	foreach(var primaryGeneOption in primaryGenes)
+	{
+		var gene = new Gene();
+		gene.Name = primaryGeneOption.InnerHtml;
+		gene.Value = int.Parse(primaryGeneOption.Attributes["value"].Value);
+		gene.Type = primaryGeneOption.Attributes["data-breed-type"].Value;
+		gene.Breeds = primaryGeneOption.Attributes["data-breed-id"].Value.Split(',').Select(x => int.Parse(x)).ToList();
+
+		page.PrimaryGenes.Add(gene);
+	}
+
+	var secondaryGenes = predictPage.DocumentNode.SelectNodes(@"//*[@id=""predict-morphology""]/div[2]/div[6]/div[2]/select/option");
+	foreach(var secondaryGeneOption in secondaryGenes)
+	{
+		var gene = new Gene();
+		gene.Name = secondaryGeneOption.InnerHtml;
+		gene.Value = int.Parse(secondaryGeneOption.Attributes["value"].Value);
+		gene.Type = secondaryGeneOption.Attributes["data-breed-type"].Value;
+		gene.Breeds = secondaryGeneOption.Attributes["data-breed-id"].Value.Split(',').Select(x => int.Parse(x)).ToList();
+
+		page.SecondaryGenes.Add(gene);
+	}
+
+	var tertiaryGenes = predictPage.DocumentNode.SelectNodes(@"//*[@id=""predict-morphology""]/div[2]/div[8]/div[2]/select/option");
+	foreach(var tertiaryGeneOption in tertiaryGenes)
+	{
+		var gene = new Gene();
+		gene.Name = tertiaryGeneOption.InnerHtml;
+		gene.Value = int.Parse(tertiaryGeneOption.Attributes["value"].Value);
+		gene.Type = tertiaryGeneOption.Attributes["data-breed-type"].Value;
+		gene.Breeds = tertiaryGeneOption.Attributes["data-breed-id"].Value.Split(',').Select(x => int.Parse(x)).ToList();
+
+		page.TertiaryGenes.Add(gene);
+	}
+
+	string cssPageContent = "";
+	using(var webClient = new System.Net.WebClient())
+	{
+		cssPageContent = webClient.DownloadString(cssPageUrl);
+	}
+
+	var cssParser = new StylesheetParser();
+	var stylesheet = cssParser.Parse(cssPageContent);
+
+	var colors = predictPage.DocumentNode.SelectNodes(@"//*[@id=""predict-morphology""]/div[2]/div[5]/div[2]/select/option");
+	foreach(var colorOption in colors)
+	{
+		var color = new Color();
+		color.Name = colorOption.InnerHtml;
+		color.Value = int.Parse(colorOption.Attributes["value"].Value);
+		var rgbColors = stylesheet.StyleRules.FirstOrDefault(x => x.SelectorText == $".color-{color.Name}").Style.BackgroundColor.Replace("rgb(", "").Replace(")", "").Split(',').Select(x => int.Parse(x)).ToList();
+		string hex = rgbColors[0].ToString("X2") +rgbColors[1].ToString("X2") + rgbColors[2].ToString("X2");
+		color.HexColor = hex;
+
+		page.Colors.Add(color);
+	}
+#>
+using System.ComponentModel;
+
+namespace FRTools.Data
+{
+	public enum DragonType
+	{
+	<#
+	foreach(var breed in page.Breeds.OrderBy(x => x.Value)) 
+	{
+	#>
+	[Description("<#= breed.Name #>")]
+		<#= breed.Name #> = <#= breed.Value #>,
+	<#
+	}
+	#>
+}
+
+	public enum Gender
+	{
+	<#
+	foreach(var gender in page.Genders.OrderBy(x => x.Value)) 
+	{
+	#>
+	[Description("<#= gender.Name #>")]
+		<#= gender.Name #> = <#= gender.Value #>,
+	<#
+	}
+	#>
+}
+
+	public enum Age
+	{
+	<#
+	foreach(var age in page.Ages.OrderBy(x => x.Value)) 
+	{
+	#>
+	[Description("<#= age.Name #>")]
+		<#= age.Name #> = <#= age.Value #>,
+	<#
+	}
+	#>
+}
+
+	public enum Element
+	{
+	<#
+	foreach(var element in page.Elements.OrderBy(x => x.Value)) 
+	{
+	#>
+	[Description("<#= element.Name #>")]
+		<#= element.Name #> = <#= element.Value #>,
+	<#
+	}
+	#>
+}
+
+	public enum Flight
+	{
+	<#
+	foreach(var element in page.Elements.OrderBy(x => x.Value)) 
+	{
+	#>
+	<#= element.Name #>,
+	<#
+	}
+	#>
+	Beastclans,
+	}
+
+	public enum EyeType
+	{
+	<#
+	foreach(var Eyetype in page.EyeTypes.OrderBy(x => x.Value)) 
+	{
+	#>
+	[Description("<#= Eyetype.Name #>")]
+		<#= Eyetype.Name.Replace("-", "").Replace(" ", "") #> = <#= Eyetype.Value #>,
+	<#
+	}
+	#>
+}
+
+	public enum Color
+	{
+		[Color("#ffffff1a")]
+		Unknown = 0,
+	<#
+	foreach(var color in page.Colors.OrderBy(x => x.Value)) 
+	{
+	#>
+	[Color("#<#= color.HexColor #>")]
+		<#= color.Name #> = <#= color.Value #>,
+	<#
+	}
+	#>
+}
+
+	public enum BodyGene
+	{
+	<#
+	foreach(var gene in page.PrimaryGenes.Where(x => x.Type == "all" || x.Type == "modern").OrderBy(x => x.Value)) 
+	{
+	#>
+	[Description("<#= gene.Name #>")]
+		<#= gene.Name.Replace(" ", "") #> = <#= gene.Value #>,
+	<#
+	}
+	#>
+}
+	<#
+	foreach(var ancientBreedGenes in page.PrimaryGenes.Where(x => x.Type == "ancient").GroupBy(x => x.Breeds[0]))
+	{
+		var breed = page.Breeds.First(x => x.Value == ancientBreedGenes.Key);
+	#>
+
+	public enum <#= breed.Name #>BodyGene
+	{
+		[Description("Basic")]
+		Basic = 0,
+	<#
+		foreach(var ancientGene in ancientBreedGenes)
+		{
+	#>
+	[Description("<#= ancientGene.Name #>")]
+		<#= ancientGene.Name.Replace($" ({breed.Name})", "").Replace(" ", "") #> = <#= ancientGene.Value #>,
+	<#
+		}
+	#>
+}
+	<#
+	}
+	#>
+
+	public enum WingGene
+	{
+	<#
+	foreach(var gene in page.SecondaryGenes.Where(x => x.Type == "all" || x.Type == "modern").OrderBy(x => x.Value)) 
+	{
+	#>
+	[Description("<#= gene.Name #>")]
+		<#= gene.Name.Replace(" ", "") #> = <#= gene.Value #>,
+	<#
+	}
+	#>
+}
+	<#
+	foreach(var ancientBreedGenes in page.SecondaryGenes.Where(x => x.Type == "ancient").GroupBy(x => x.Breeds[0]))
+	{
+		var breed = page.Breeds.First(x => x.Value == ancientBreedGenes.Key);
+	#>
+
+	public enum <#= breed.Name #>WingGene
+	{
+		[Description("Basic")]
+		Basic = 0,
+	<#
+		foreach(var ancientGene in ancientBreedGenes)
+		{
+	#>
+	[Description("<#= ancientGene.Name #>")]
+		<#= ancientGene.Name.Replace($" ({breed.Name})", "").Replace(" ", "") #> = <#= ancientGene.Value #>,
+	<#
+		}
+	#>
+}
+	<#
+	}
+	#>
+	
+	public enum TertiaryGene
+	{
+	<#
+	foreach(var gene in page.TertiaryGenes.Where(x => x.Type == "all" || x.Type == "modern").OrderBy(x => x.Value)) 
+	{
+	#>
+	[Description("<#= gene.Name #>")]
+		<#= gene.Name.Replace(" ", "") #> = <#= gene.Value #>,
+	<#
+	}
+	#>
+}
+	<#
+	foreach(var ancientBreedGenes in page.TertiaryGenes.Where(x => x.Type == "ancient").GroupBy(x => x.Breeds[0]))
+	{
+		var breed = page.Breeds.First(x => x.Value == ancientBreedGenes.Key);
+	#>
+
+	public enum <#= breed.Name #>TertGene
+	{
+		[Description("Basic")]
+		Basic = 0,
+	<#
+		foreach(var ancientGene in ancientBreedGenes)
+		{
+	#>
+	[Description("<#= ancientGene.Name #>")]
+		<#= ancientGene.Name.Replace($" ({breed.Name})", "").Replace(" ", "") #> = <#= ancientGene.Value #>,
+	<#
+		}
+	#>
+}
+	<#
+	}
+	#>
+
+	public static class GeneratedFREnumExtentions
+	{
+		public static bool IsAncientBreed(this DragonType type)
+		{
+			<#
+			foreach(var breed in page.Breeds.Where(x => x.Type == "ancient").OrderBy(x => x.Value))
+			{
+			#>
+if ((int)type == <#= breed.Value #>)
+				return true;
+			<#
+			}
+			#>
+return false;
+		}
+
+		public static System.Type PrimaryGeneType(this DragonType type)
+		{
+			<#
+			foreach(var breed in page.Breeds.Where(x => x.Type == "ancient").OrderBy(x => x.Value))
+			{
+			#>
+if ((int)type == <#= breed.Value #>)
+				return typeof(<#= breed.Name #>BodyGene);
+			<#
+			}
+			#>
+return typeof(BodyGene);
+		}
+
+		public static System.Type SecondaryGeneType(this DragonType type)
+		{
+			<#
+			foreach(var breed in page.Breeds.Where(x => x.Type == "ancient").OrderBy(x => x.Value))
+			{
+			#>
+if ((int)type == <#= breed.Value #>)
+				return typeof(<#= breed.Name #>WingGene);
+			<#
+			}
+			#>
+return typeof(WingGene);
+		}
+
+		public static System.Type TertiaryGeneType(this DragonType type)
+		{
+			<#
+			foreach(var breed in page.Breeds.Where(x => x.Type == "ancient").OrderBy(x => x.Value))
+			{
+			#>
+if ((int)type == <#= breed.Value #>)
+				return typeof(<#= breed.Name #>TertGene);
+			<#
+			}
+			#>
+return typeof(TertiaryGene);
+		}
+	}
+
+	public static class GeneratedFRHelpers
+	{
+		public static DragonType[] GetModernBreeds()
+		{
+			return new[]
+			{
+				<#
+				foreach(var breed in page.Breeds.Where(x => x.Type == "modern").OrderBy(x => x.Value))
+				{
+				#>DragonType.<#= breed.Name #>,
+				<#
+				}
+				#>
+
+			};
+		}
+
+		public static DragonType[] GetAncientBreeds()
+		{
+			return new[]
+			{
+				<#
+				foreach(var breed in page.Breeds.Where(x => x.Type == "ancient").OrderBy(x => x.Value))
+				{
+				#>DragonType.<#= breed.Name #>,
+				<#
+				}
+				#>
+
+			};
+		}
+
+		public static string GenerateDragonImageUrl(DataModels.FlightRisingModels.DragonCache dragon, bool swapSilhouette = false)
+		{
+			var gender = swapSilhouette ? (dragon.Gender == Gender.Male ? Gender.Female : Gender.Male) : dragon.Gender;
+			switch (dragon.DragonType)
+			{
+				<#
+				foreach(var breed in page.Breeds.Where(x => x.Type == "ancient").OrderBy(x => x.Value))
+				{
+				#>
+case DragonType.<#= breed.Name #>:
+					return GenerateDragonImageUrl(dragon.DragonType, gender, dragon.Age, (<#= breed.Name #>BodyGene)dragon.BodyGene,
+						dragon.BodyColor, (<#= breed.Name #>WingGene)dragon.WingGene, dragon.WingColor, (<#= breed.Name #>TertGene)dragon.TertiaryGene,
+						dragon.TertiaryColor, dragon.Element, dragon.EyeType);
+				<#
+				}
+				#>
+default:
+					return GenerateDragonImageUrl(dragon.DragonType, gender, dragon.Age, (BodyGene)dragon.BodyGene,
+						dragon.BodyColor, (WingGene)dragon.WingGene, dragon.WingColor, (TertiaryGene)dragon.TertiaryGene,
+						dragon.TertiaryColor, dragon.Element, dragon.EyeType);
+			}
+		}
+
+		<#
+		foreach(var breed in page.Breeds.Where(x => x.Type == "ancient").OrderBy(x => x.Value))
+		{
+		#>
+public static string GenerateDragonImageUrl(DragonType breed, Gender gender, Age age, <#= breed.Name #>BodyGene bodygene, Color body, <#= breed.Name #>WingGene winggene, Color wings, <#= breed.Name #>TertGene tertgene, Color tert, Element element, EyeType eyetype)
+			=> GenerateDragonImageUrl((int)breed, (int)gender, (int)age, (int)bodygene, (int)body, (int)winggene, (int)wings, (int)tertgene, (int)tert, (int)element, (int)eyetype);
+		<#
+		}
+
+		#>
+public static string GenerateDragonImageUrl(DragonType breed, Gender gender, Age age, BodyGene bodygene, Color body, WingGene winggene, Color wings, TertiaryGene tertgene, Color tert, Element element, EyeType eyetype)
+			=> GenerateDragonImageUrl((int)breed, (int)gender, (int)age, (int)bodygene, (int)body, (int)winggene, (int)wings, (int)tertgene, (int)tert, (int)element, (int)eyetype);
+
+		public static string GenerateDragonImageUrl(int breed, int gender, int age, int bodygene, int body, int winggene, int wings, int tertgene, int tert, int element, int eyetype)
+		{
+			using (var client = new System.Net.WebClient())
+			{
+				var result = client.UploadValues("https://www1.flightrising.com/scrying/ajax-predict", new System.Collections.Specialized.NameValueCollection
+				{
+					{ "breed", breed.ToString() },
+					{ "gender", gender.ToString() },
+					{ "age", age.ToString() },
+					{ "bodygene", bodygene.ToString() },
+					{ "body", body.ToString() },
+					{ "winggene", winggene.ToString() },
+					{ "wings", wings.ToString() },
+					{ "tertgene", tertgene.ToString() },
+					{ "tert", tert.ToString() },
+					{ "element", element.ToString() },
+					{ "eyetype", eyetype.ToString() },
+				});
+				var str = System.Text.Encoding.UTF8.GetString(result);
+				var dragonUrl = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(str).dragon_url;
+				return "https://www1.flightrising.com" + dragonUrl;
+			}
+		}
+	}
+}
+<#+
+	class Page
+	{
+		public List<DragonBreed> Breeds { get; set; } = new List<DragonBreed>();
+		public List<Gender> Genders { get; set; } = new List<Gender>();
+		public List<Gene> PrimaryGenes { get; set; } = new List<Gene>();
+		public List<Gene> SecondaryGenes { get; set; } = new List<Gene>();
+		public List<Gene> TertiaryGenes { get; set; } = new List<Gene>();
+		public List<Age> Ages { get; set; } = new List<Age>();
+		public List<Element> Elements { get; set; } = new List<Element>();
+		public List<EyeType> EyeTypes { get; set; } = new List<EyeType>();
+		public List<Color> Colors { get; set; } = new List<Color>();
+	}
+
+	class DataItem
+	{
+		public string Name { get; set; }
+		public int Value { get; set; }
+	}
+
+	class DragonBreed : DataItem
+	{
+		public string Type { get; set; }
+	}
+
+	class Gender : DataItem
+	{
+	}
+
+	class Age : DataItem
+	{
+	}
+
+	class Element : DataItem
+	{
+	}
+
+	class EyeType : DataItem
+	{
+	}
+
+	class Gene : DataItem
+	{
+		public string Type { get; set; }
+		public List<int> Breeds { get; set; }
+	}
+
+	class Color : DataItem
+	{
+		public string HexColor { get; set; }
+	}
+#>

@@ -11,13 +11,13 @@
         </h4>
     </div>
     <div class="panel-body">
-        @if (Model.Dragon.EyeType == EyeType.Primal || Model.Dragon.EyeType == EyeType.Glowing || (Model.Dragon.EyeType == EyeType.MultiGaze && (FRTools.Common.FRHelpers.IsAncientBreed(Model.Dragon.DragonType))))
+        @if (Model.Dragon.EyeType == EyeType.Primal || Model.Dragon.EyeType == EyeType.Glowing || (Model.Dragon.EyeType == EyeType.MultiGaze && Model.Dragon.DragonType.IsAncientBreed()))
         {
             <div class="alert alert-warning">
                 This dragon has the <b>@(Model.Dragon.EyeType)</b> eyetype. Due to the nature of how these eyes are generated here they don't look perfect (yet). This is a work in progress!
             </div>
         }
-        else if (Model.Dragon.EyeType == EyeType.MultiGaze && (FRTools.Common.FRHelpers.IsAncientBreed(Model.Dragon.DragonType)))
+        else if (Model.Dragon.EyeType == EyeType.MultiGaze && Model.Dragon.DragonType.IsAncientBreed())
         {
             <div class="alert alert-success">
                 The eye masks for multi-gaze of modern breeds are generously provided by <b>Grovey#79114</b> (<a href="https://www1.flightrising.com/forums/gde/2571730">forum thread</a>)

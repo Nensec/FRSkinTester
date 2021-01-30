@@ -21,7 +21,7 @@ namespace FRTools.Data.DataModels.FlightRisingModels
         public Color TertiaryColor { get; set; }
         public EyeType EyeType { get; set; }
         public Element Element { get; set; }
-        public Age Age { get; set; } = Age.Adult;
+        public Age Age { get; set; } = Age.Dragon;
         [NotMapped]
         public string Apparel { get; set; }
         [StringLength(40)]
@@ -43,55 +43,11 @@ namespace FRTools.Data.DataModels.FlightRisingModels
             if (split.Length > 3)
                 dragon.EyeType = (EyeType)int.Parse(split[3]);
             if (split.Length > 4)
-            {
-                switch (dragon.DragonType)
-                {
-                    case DragonType.Gaoler:
-                        dragon.BodyGene = (int)Enum.Parse(typeof(GaolerBodyGene), split[4]);
-                        break;
-                    case DragonType.Banescale:
-                        dragon.BodyGene = (int)Enum.Parse(typeof(BanescaleBodyGene), split[4]);
-                        break;
-                    case DragonType.Veilspun:
-                        dragon.BodyGene = (int)Enum.Parse(typeof(VeilspunBodyGene), split[4]);
-                        break;
-                    default:
-                        dragon.BodyGene = (int)Enum.Parse(typeof(BodyGene), split[4]);
-                        break;
-                }
-            }
+                dragon.BodyGene = (int)Enum.Parse(dragon.DragonType.PrimaryGeneType(), split[4]);
             if (split.Length > 5)
-                switch (dragon.DragonType)
-                {
-                    case DragonType.Gaoler:
-                        dragon.WingGene = (int)Enum.Parse(typeof(GaolerWingGene), split[5]);
-                        break;
-                    case DragonType.Banescale:
-                        dragon.WingGene = (int)Enum.Parse(typeof(BanescaleWingGene), split[5]);
-                        break;
-                    case DragonType.Veilspun:
-                        dragon.WingGene = (int)Enum.Parse(typeof(VeilspunWingGene), split[5]);
-                        break;
-                    default:
-                        dragon.WingGene = (int)Enum.Parse(typeof(WingGene), split[5]);
-                        break;
-                }
+                dragon.BodyGene = (int)Enum.Parse(dragon.DragonType.SecondaryGeneType(), split[4]);
             if (split.Length > 6)
-                switch (dragon.DragonType)
-                {
-                    case DragonType.Gaoler:
-                        dragon.TertiaryGene = (int)Enum.Parse(typeof(GaolerTertGene), split[6]);
-                        break;
-                    case DragonType.Banescale:
-                        dragon.TertiaryGene = (int)Enum.Parse(typeof(BanescaleTertGene), split[6]);
-                        break;
-                    case DragonType.Veilspun:
-                        dragon.TertiaryGene = (int)Enum.Parse(typeof(VeilspunTertGene), split[5]);
-                        break;
-                    default:
-                        dragon.TertiaryGene = (int)Enum.Parse(typeof(TertiaryGene), split[6]);
-                        break;
-                }
+                dragon.BodyGene = (int)Enum.Parse(dragon.DragonType.TertiaryGeneType(), split[4]);
             if (split.Length > 7)
                 dragon.BodyColor = (Color)int.Parse(split[7]);
             if (split.Length > 8)
@@ -121,11 +77,22 @@ namespace FRTools.Data.DataModels.FlightRisingModels
 
         public int[] GetApparel() => string.IsNullOrEmpty(Apparel) ? new int[] { } : Apparel.Split(',').Select(x => int.Parse(x)).ToArray();
 
-        public Enum GetBodyGene() => (Enum)Enum.Parse(DragonType == DragonType.Gaoler ? typeof(GaolerBodyGene) : typeof(BodyGene), BodyGene.ToString());
-        public Enum GetWingGene() => (Enum)Enum.Parse(DragonType == DragonType.Gaoler ? typeof(GaolerWingGene) : typeof(WingGene), WingGene.ToString());
-        public Enum GetTertGene() => (Enum)Enum.Parse(DragonType == DragonType.Gaoler ? typeof(GaolerTertGene) : typeof(TertiaryGene), TertiaryGene.ToString());
-
         [NotMapped]
-        public Dictionary<string, string> PreviewUrls { get; } = new Dictionary<string, string>();
+        public Dictionary<(string, int), string> PreviewUrls { get; } = new Dictionary<(string, int), string>();
+
+        public Enum GetPrimaryGene()
+        {
+            return (Enum)Enum.Parse(DragonType.PrimaryGeneType(), BodyGene.ToString());
+        }
+
+        public Enum GetSecondaryGene()
+        {
+            return (Enum)Enum.Parse(DragonType.SecondaryGeneType(), WingGene.ToString());
+        }
+
+        public Enum GetTertiaryGene()
+        {
+            return (Enum)Enum.Parse(DragonType.TertiaryGeneType(), TertiaryGene.ToString());
+        }
     }
 }

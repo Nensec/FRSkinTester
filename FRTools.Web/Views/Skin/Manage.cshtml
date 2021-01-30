@@ -114,7 +114,7 @@
                                             <div id="Preview@(preview.Item2)_popover" class="hide">
                                                 <ul style="list-style:none; padding:0">
                                                     <li><b>Colors:</b> @(dragon.BodyColor) / @(dragon.WingColor) / @(dragon.TertiaryColor)</li>
-                                                    <li><b>Genes:</b> @(dragon.GetBodyGene()) / @(dragon.GetWingGene()) / @(dragon.GetTertGene())</li>
+                                                    <li><b>Genes:</b> @(dragon.GetPrimaryGene()) / @(dragon.GetSecondaryGene()) / @(dragon.GetTertiaryGene())</li>
 
                                                     <li><b>Element:</b> @(dragon.Element)</li>
                                                     <li><b>Eyetype:</b> @(dragon.EyeType.GetDescription())</li>
@@ -209,7 +209,7 @@
     @{
         var previewTimeData = reals.Concat(scries).Where(x => x.Item1.PreviewTime != null).Select(x => x.Item1.PreviewTime).OrderBy(x => x.Value).GroupBy(x => x.Value.Date).Select(x => (x.First().Value.ToString("dd/MM/yyyy"), x.Count()));
         var previewColorData = previewDragons.Select(x => (x.BodyColor, x.WingColor, x.TertiaryColor)).ToList();
-        var previewGeneData = previewDragons.Select(x => (x.GetBodyGene(), x.GetWingGene(), x.GetTertGene())).ToList();
+        var previewGeneData = previewDragons.Select(x => (x.GetPrimaryGene(), x.GetSecondaryGene(), x.GetTertiaryGene())).ToList();
     }
     $(document).ready(function () {
         $('#carousel-previews').on('slide.bs.carousel', function (event) {
