@@ -13,22 +13,22 @@ namespace FRTools.Discord.Preconditions
         }
         public object ExactValue { get; }
 
-        public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, ParameterInfo parameter, object value, IServiceProvider services)
+        public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, ParameterInfo parameter, object value, IServiceProvider services)
         {
             if (parameter.IsOptional && value == null)
-                return PreconditionResult.FromSuccess();
+                return Task.FromResult(PreconditionResult.FromSuccess());
 
             if (ExactValue is IEnumerable<string> ExactValueArray)
             {
                 foreach (var exactValue in ExactValueArray)
                 {
                     if (value.Equals(exactValue))
-                        return PreconditionResult.FromSuccess();
+                        return Task.FromResult(PreconditionResult.FromSuccess());
                 }
-                return PreconditionResult.FromError($"**{value}** must equal any of the following: **{string.Join("**, **", ExactValueArray)}**");
+                return Task.FromResult(PreconditionResult.FromError($"**{value}** must equal any of the following: **{string.Join("**, **", ExactValueArray)}**"));
             }
             else
-                return value.Equals(ExactValue) ? PreconditionResult.FromSuccess() : PreconditionResult.FromError($"**{value}** must equal **{ExactValue}**");
+                return Task.FromResult(value.Equals(ExactValue) ? PreconditionResult.FromSuccess() : PreconditionResult.FromError($"**{value}** must equal **{ExactValue}**"));
         }
     }
 }

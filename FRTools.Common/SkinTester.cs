@@ -322,6 +322,8 @@ namespace FRTools.Common
 
         public async Task<Bitmap> GetInvisibleDragonWithApparel(LoggingContext logContext, DragonCache dragon, bool force = false)
         {
+            _logger.Log(LogItemOrigin.SkinTester, LogItemSeverity.Debug, $"Getting invisible dragon with apparel. Force:{force}", context: logContext);
+
             Bitmap invisibleDwagon;
             var azureUrl = $@"dragoncache\{dragon.FRDragonId}_{dragon.Gender}_invisible.png";
             if (!force && new AzureImageService().Exists(azureUrl, out var cacheUrl))
@@ -355,7 +357,7 @@ namespace FRTools.Common
                         return invisibleDwagon;
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     return null;
                 }

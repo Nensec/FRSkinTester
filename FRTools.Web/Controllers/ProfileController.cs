@@ -24,7 +24,7 @@ namespace FRTools.Web.Controllers
         }
 
         [Route(Name = "SelfProfile")]
-        public async Task<ActionResult> Index()
+        public ActionResult Index()
         {
             var vm = new ViewProfileViewModel
             {
@@ -40,7 +40,7 @@ namespace FRTools.Web.Controllers
 
         [Route("{*username}", Name = "Profile")]
         [AllowAnonymous]
-        public async Task<ActionResult> Index(string username)
+        public ActionResult Index(string username)
         {
             var user = DataContext.Users.Include(x => x.FRUser).Include(x => x.Previews.Select(p => p.Skin)).FirstOrDefault(x => x.UserName.ToLower() == username.ToLower());
             if (user == null)
